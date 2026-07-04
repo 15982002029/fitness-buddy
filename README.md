@@ -20,7 +20,7 @@
 **方式二：终端一键运行（推荐给开发者）**
 
 ```bash
-git clone https://github.com/<your-name>/fitness-buddy.git
+git clone https://github.com/15982002029/fitness-buddy.git
 cd fitness-buddy
 npm install
 npm start
