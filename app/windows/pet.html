@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+  html, body { background: transparent; overflow: hidden; font-family: -apple-system, "PingFang SC", sans-serif; }
+  #wrap {
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    cursor: grab;
+  }
+  #wrap:active { cursor: grabbing; }
+  #petBox { position: relative; flex: 1; display: flex; align-items: flex-end; justify-content: center; width: 100%; }
+  #pet {
+    width: 100%; height: 100%; object-fit: contain;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,.28));
+    transition: filter .4s ease, transform .3s ease;
+    animation: float 3.6s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+  /* 疲惫：轻微降饱和、发暗、缓慢摇晃 */
+  #pet.tired {
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,.28)) saturate(.65) brightness(.92);
+    animation: sway 2.4s ease-in-out infinite;
+  }
+  /* 开心：提亮、轻微放大、欢快弹跳 */
+  #pet.happy {
+    filter: drop-shadow(0 8px 14px rgba(120,90,255,.35)) saturate(1.15) brightness(1.06);
+    animation: bounce .6s ease infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  @keyframes sway  { 0%,100%{transform:rotate(-3.5deg)} 50%{transform:rotate(3.5deg)} }
+  @keyframes bounce{ 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-12px) scale(1.04)} }
+
+  /* 状态角标：疲惫冒 Zzz，开心冒 ✨ */
+  #emote {
+    position: absolute; top: 4%; right: 6%; font-size: 20px; opacity: 0;
+    transition: opacity .3s; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3));
+  }
+  #pet.tired ~ #emote { opacity: 1; animation: rise 2.5s ease-in-out infinite; }
+  #pet.happy ~ #emote { opacity: 1; animation: pop .6s ease infinite; }
+  @keyframes rise { 0%{transform:translateY(4px);opacity:.3} 50%{opacity:1} 100%{transform:translateY(-8px);opacity:0} }
+  @keyframes pop  { 0%,100%{transform:scale(.9)} 50%{transform:scale(1.25)} }
+
+  #bubble {
+    margin-bottom: 4px; padding: 4px 10px; border-radius: 12px;
+    background: rgba(30,30,40,.88); color: #fff; font-size: 11px; white-space: nowrap;
+    opacity: 0; transition: opacity .2s; pointer-events: none;
+  }
+  #wrap:hover #bubble { opacity: 1; }
+  #stats {
+    margin-top: 2px; font-size: 10px; color: #fff;
+    background: rgba(30,30,40,.82); padding: 2px 8px; border-radius: 8px;
+    opacity: 0; transition: opacity .2s; white-space: nowrap;
+  }
+  #wrap:hover #stats { opacity: 1; }
+</style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="bubble">在等 AI 的时候，记得照顾身体 🫶</div>
+    <div id="petBox">
+      <img id="pet" src="../../assets/character/fox.png" alt="灵狐" draggable="false" />
+      <div id="emote">💤</div>
+    </div>
+    <div id="stats">加载中…</div>
+  </div>
+<script>
+  const pet = document.getElementById('pet');
+  const bubble = document.getElementById('bubble');
+  const statsEl = document.getElementById('stats');
+  const emote = document.getElementById('emote');
+
+  const WORD = {
+    normal: '在等 AI 的时候，记得照顾身体 🫶',
+    tired: '坐太久啦，起来动动吧～',
+    happy: '太棒了！身体谢谢你 ✨'
+  };
+  const EMOTE = { normal: '', tired: '💤', happy: '✨' };
+
+  window.buddy.onPetState(({ state }) => {
+    pet.className = state === 'normal' ? '' : state;
+    bubble.textContent = WORD[state] || WORD.normal;
+    emote.textContent = EMOTE[state] || '';
+  });
+
+  window.buddy.onStats((s) => {
+    statsEl.textContent = `完成 ${s.completedCount} · 跳过 ${s.skippedCount} · 喝水 ${s.waterCount} · 连续 ${s.streak} 天`;
+  });
+
+  // 手动拖拽 + 点击识别（因为不能用 -webkit-app-region:drag，否则 click 不触发）
+  const wrap = document.getElementById('wrap');
+  let down = false, moved = false, sx = 0, sy = 0, offX = 0, offY = 0;
+
+  wrap.addEventListener('pointerdown', (e) => {
+    down = true; moved = false;
+    sx = e.screenX; sy = e.screenY;
+    offX = e.clientX; offY = e.clientY;
+    wrap.setPointerCapture(e.pointerId);
+  });
+  wrap.addEventListener('pointermove', (e) => {
+    if (!down) return;
+    if (Math.abs(e.screenX - sx) > 3 || Math.abs(e.screenY - sy) > 3) moved = true;
+    if (moved) window.buddy.moveWindow(e.screenX - offX, e.screenY - offY);
+  });
+  wrap.addEventListener('pointerup', (e) => {
+    if (down && !moved) window.buddy.togglePanel(); // 没拖动 = 点击 → 开面板
+    down = false;
+    try { wrap.releasePointerCapture(e.pointerId); } catch {}
+  });
+
+  window.buddy.requestStats();
+</script>
+</body>
+</html>

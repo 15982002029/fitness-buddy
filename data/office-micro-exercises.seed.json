@@ -1,0 +1,370 @@
+[
+  {
+    "id": "eye-20-20-20",
+    "name": "20 秒远眺",
+    "category": "eyes",
+    "durationSec": 20,
+    "bodyArea": ["eyes"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "把视线从屏幕移开。",
+      "看向 6 米外或窗外。",
+      "放松眼周，不要眯眼。",
+      "保持自然呼吸 20 秒。"
+    ],
+    "caution": "如果已经出现明显眼痛、头痛或视力异常，不要只依赖提醒工具，应咨询专业人士。"
+  },
+  {
+    "id": "eye-palming",
+    "name": "手心捂眼",
+    "category": "eyes",
+    "durationSec": 30,
+    "bodyArea": ["eyes"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "搓热双手手心。",
+      "轻轻捂住双眼，不要压迫眼球。",
+      "在黑暗中放松 30 秒。",
+      "慢慢移开双手，眨几下眼。"
+    ],
+    "caution": "手要干净，避免揉眼造成感染。"
+  },
+  {
+    "id": "eye-figure-eight",
+    "name": "眼球画八字",
+    "category": "eyes",
+    "durationSec": 30,
+    "bodyArea": ["eyes"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "想象眼前有一个横躺的 8 字。",
+      "用眼球缓慢沿着 8 字描画。",
+      "顺时针 15 秒，逆时针 15 秒。",
+      "全程头不动，只动眼睛。"
+    ],
+    "caution": "出现头晕就停止。"
+  },
+  {
+    "id": "wrist-extension-45",
+    "name": "手腕伸展",
+    "category": "wrist",
+    "durationSec": 45,
+    "bodyArea": ["wrist", "forearm"],
+    "equipment": "none",
+    "intensity": "light",
+    "steps": [
+      "右臂向前伸直，掌心朝前。",
+      "用左手轻轻把右手手指向后拉。",
+      "保持 15 秒，换另一侧。",
+      "力度保持舒适，不要拉到疼痛。"
+    ],
+    "caution": "如果手腕已有损伤、麻木或刺痛，动作要停止并寻求专业建议。"
+  },
+  {
+    "id": "wrist-flexion-45",
+    "name": "手腕下压伸展",
+    "category": "wrist",
+    "durationSec": 45,
+    "bodyArea": ["wrist", "forearm"],
+    "equipment": "none",
+    "intensity": "light",
+    "steps": [
+      "右臂向前伸直，掌心朝下。",
+      "用左手轻轻把右手手背向下、向身体方向压。",
+      "保持 15 秒，换另一侧。",
+      "感受前臂上侧的轻微拉伸。"
+    ],
+    "caution": "刺痛或麻木立即停止。"
+  },
+  {
+    "id": "wrist-circles-30",
+    "name": "手腕绕环",
+    "category": "wrist",
+    "durationSec": 30,
+    "bodyArea": ["wrist"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "双手握空拳，向前伸出。",
+      "手腕缓慢绕圈，顺时针 10 圈。",
+      "再逆时针 10 圈。",
+      "动作慢而放松。"
+    ],
+    "caution": "幅度以舒适为准。"
+  },
+  {
+    "id": "finger-stretch-30",
+    "name": "手指张合",
+    "category": "wrist",
+    "durationSec": 30,
+    "bodyArea": ["wrist", "fingers"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "双手用力张开五指到最大。",
+      "保持 3 秒，然后握拳。",
+      "重复 10 次。",
+      "感受手指和手掌的放松。"
+    ],
+    "caution": "关节疼痛时减小力度。"
+  },
+  {
+    "id": "shoulder-roll-60",
+    "name": "肩部绕环",
+    "category": "shoulder_neck",
+    "durationSec": 60,
+    "bodyArea": ["shoulder", "upper_back"],
+    "equipment": "none",
+    "intensity": "light",
+    "steps": [
+      "坐直或站直，双臂自然下垂。",
+      "双肩慢慢向上、向后、向下绕环。",
+      "做 10 次后反方向再做 10 次。",
+      "保持动作缓慢，不要耸肩用力过猛。"
+    ],
+    "caution": "肩颈疼痛明显时不要强行大幅度绕环。"
+  },
+  {
+    "id": "neck-reset-45",
+    "name": "颈部轻复位",
+    "category": "shoulder_neck",
+    "durationSec": 45,
+    "bodyArea": ["neck"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "坐直，想象头顶被轻轻向上提。",
+      "下巴轻轻向后收，不要低头。",
+      "感受后颈拉长，保持 5 秒。",
+      "放松，重复 6 次。"
+    ],
+    "caution": "动作要轻缓，避免快速甩头。"
+  },
+  {
+    "id": "neck-side-stretch-45",
+    "name": "颈部侧拉伸",
+    "category": "shoulder_neck",
+    "durationSec": 45,
+    "bodyArea": ["neck", "shoulder"],
+    "equipment": "none",
+    "intensity": "light",
+    "steps": [
+      "坐直，右手轻搭在头左侧。",
+      "头缓慢向右倾，感受左侧颈部拉伸。",
+      "保持 15 秒，换另一侧。",
+      "不要用力下压，自然重量即可。"
+    ],
+    "caution": "颈椎有病史者动作要格外轻柔或咨询医生。"
+  },
+  {
+    "id": "chest-open-45",
+    "name": "扩胸开肩",
+    "category": "shoulder_neck",
+    "durationSec": 45,
+    "bodyArea": ["chest", "shoulder"],
+    "equipment": "none",
+    "intensity": "light",
+    "steps": [
+      "双手在身后十指交扣。",
+      "挺胸，双臂缓慢向后向下伸展。",
+      "感受胸前打开，保持 15 秒。",
+      "缓慢放松，重复 2 次。"
+    ],
+    "caution": "肩部有伤避免过度后展。"
+  },
+  {
+    "id": "upper-back-stretch-45",
+    "name": "上背伸展",
+    "category": "back",
+    "durationSec": 45,
+    "bodyArea": ["upper_back"],
+    "equipment": "none",
+    "intensity": "light",
+    "steps": [
+      "双手在身前十指交扣，掌心朝外。",
+      "手臂前推，背部拱起像抱住一个大球。",
+      "低头，感受上背拉伸，保持 15 秒。",
+      "缓慢回正，重复 2 次。"
+    ],
+    "caution": "动作缓慢，避免突然发力。"
+  },
+  {
+    "id": "seated-twist-45",
+    "name": "坐姿脊柱扭转",
+    "category": "back",
+    "durationSec": 45,
+    "bodyArea": ["spine", "lower_back"],
+    "equipment": "chair",
+    "intensity": "light",
+    "steps": [
+      "坐直，双脚平放地面。",
+      "右手扶椅背，身体缓慢向右扭转。",
+      "保持 15 秒，目光随转动方向。",
+      "回正后换另一侧。"
+    ],
+    "caution": "腰部不适时减小幅度，不要硬转。"
+  },
+  {
+    "id": "cat-cow-seated-60",
+    "name": "坐姿猫牛式",
+    "category": "back",
+    "durationSec": 60,
+    "bodyArea": ["spine", "lower_back"],
+    "equipment": "chair",
+    "intensity": "light",
+    "steps": [
+      "坐直，双手放大腿上。",
+      "吸气挺胸塌腰，抬头向上。",
+      "呼气拱背收腹，低头看肚脐。",
+      "缓慢交替 6 次，配合呼吸。"
+    ],
+    "caution": "腰椎急性疼痛期不要做。"
+  },
+  {
+    "id": "stand-up-60",
+    "name": "起身站立 60 秒",
+    "category": "stand",
+    "durationSec": 60,
+    "bodyArea": ["whole_body"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "从椅子上站起来。",
+      "原地踏步或走动 60 秒。",
+      "顺便倒杯水或走到窗边。",
+      "让血液重新流动起来。"
+    ],
+    "caution": "久坐后突然起身若头晕，先扶稳再走。"
+  },
+  {
+    "id": "calf-raise-45",
+    "name": "提踵（踮脚）",
+    "category": "legs",
+    "durationSec": 45,
+    "bodyArea": ["calf", "legs"],
+    "equipment": "none",
+    "intensity": "light",
+    "steps": [
+      "站立，双脚与肩同宽。",
+      "缓慢踮起脚尖，提到最高。",
+      "停 1 秒后缓慢落下。",
+      "重复 15 次。"
+    ],
+    "caution": "平衡不稳时扶住桌子。"
+  },
+  {
+    "id": "hip-flexor-stretch-60",
+    "name": "髋屈肌站立拉伸",
+    "category": "legs",
+    "durationSec": 60,
+    "bodyArea": ["hip", "legs"],
+    "equipment": "none",
+    "intensity": "light",
+    "steps": [
+      "站立，右脚向后撤一大步。",
+      "前腿屈膝，重心前移，感受右髋前侧拉伸。",
+      "保持 20 秒，换另一侧。",
+      "上身保持直立。"
+    ],
+    "caution": "膝盖不适时缩小步幅。"
+  },
+  {
+    "id": "leg-march-45",
+    "name": "高抬腿原地踏步",
+    "category": "legs",
+    "durationSec": 45,
+    "bodyArea": ["legs", "core"],
+    "equipment": "none",
+    "intensity": "moderate",
+    "steps": [
+      "站立，原地踏步并尽量抬高膝盖。",
+      "手臂自然摆动配合。",
+      "持续 45 秒，呼吸均匀。",
+      "感受心率轻微上升。"
+    ],
+    "caution": "膝关节或心血管有问题者降低强度。"
+  },
+  {
+    "id": "water-drink",
+    "name": "喝口水",
+    "category": "water",
+    "durationSec": 30,
+    "bodyArea": ["whole_body"],
+    "equipment": "cup",
+    "intensity": "very_light",
+    "steps": [
+      "拿起水杯，喝几口水。",
+      "如果杯子空了，顺便去接满。",
+      "趁机活动一下身体。",
+      "回来继续。"
+    ],
+    "caution": "按个人情况适量饮水，特殊疾病遵医嘱。"
+  },
+  {
+    "id": "deep-breath-60",
+    "name": "深呼吸放松",
+    "category": "breathing",
+    "durationSec": 60,
+    "bodyArea": ["whole_body"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "坐直，双肩放松。",
+      "用鼻子缓慢吸气 4 秒，腹部鼓起。",
+      "屏息 2 秒，再缓慢呼气 6 秒。",
+      "重复 5 个循环。"
+    ],
+    "caution": "呼吸过程中如感到头晕，恢复自然呼吸即可。"
+  },
+  {
+    "id": "shoulder-shrug-30",
+    "name": "耸肩放松",
+    "category": "shoulder_neck",
+    "durationSec": 30,
+    "bodyArea": ["shoulder", "neck"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "吸气，双肩用力向上耸到耳朵附近。",
+      "保持 3 秒。",
+      "呼气，双肩突然放松落下。",
+      "重复 8 次。"
+    ],
+    "caution": "动作轻松即可，不要僵硬。"
+  },
+  {
+    "id": "ankle-circles-30",
+    "name": "脚踝绕环",
+    "category": "legs",
+    "durationSec": 30,
+    "bodyArea": ["ankle", "legs"],
+    "equipment": "none",
+    "intensity": "very_light",
+    "steps": [
+      "坐姿，抬起右脚离地。",
+      "脚踝顺时针绕 10 圈，逆时针 10 圈。",
+      "换左脚重复。",
+      "促进下肢血液循环。"
+    ],
+    "caution": "脚踝有伤时减小幅度。"
+  },
+  {
+    "id": "wall-pushup-60",
+    "name": "靠墙俯卧撑",
+    "category": "stand",
+    "durationSec": 60,
+    "bodyArea": ["chest", "arm", "core"],
+    "equipment": "wall",
+    "intensity": "moderate",
+    "steps": [
+      "面对墙站立，双手撑墙与肩同宽。",
+      "身体保持直线，缓慢屈肘靠近墙面。",
+      "再推回原位，重复 12 次。",
+      "全程收紧核心。"
+    ],
+    "caution": "手腕或肩部疼痛时停止。"
+  }
+]

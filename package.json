@@ -1,0 +1,47 @@
+{
+  "name": "fitness-buddy",
+  "version": "0.1.0",
+  "description": "会在你等 AI 回复的间隙提醒你活动的桌面健身宠物",
+  "main": "app/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "author": "jiazaixi",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "get-windows": "^9.2.0"
+  },
+  "build": {
+    "appId": "com.jiazaixi.fitnessbuddy",
+    "productName": "健身助手",
+    "npmRebuild": false,
+    "asar": false,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "app/**/*",
+      "assets/**/*",
+      "data/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.healthcare-fitness",
+      "icon": "assets/icon.icns",
+      "extendInfo": {
+        "LSUIElement": true
+      }
+    }
+  }
+}

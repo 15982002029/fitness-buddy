@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, "PingFang SC", sans-serif; user-select: none; }
+  html, body { background: transparent; overflow: hidden; }
+  #card {
+    margin: 10px; height: calc(100vh - 20px);
+    background: linear-gradient(165deg, #ffffff 0%, #f2f4ff 100%);
+    border-radius: 22px; box-shadow: 0 18px 54px rgba(40,50,90,.32);
+    border: 1px solid rgba(120,130,200,.18);
+    padding: 22px 24px 18px; display: flex; flex-direction: column;
+  }
+  /* 顶部：进度点 + 跳过 */
+  .top { display: flex; align-items: center; margin-bottom: 6px; height: 16px; }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #d7dbf0; transition: .2s; }
+  .dot.on { background: #6c7cff; width: 18px; border-radius: 4px; }
+  .skip { margin-left: auto; font-size: 11px; color: #b3b7d0; cursor: pointer; }
+  .skip:hover { color: #6c7cff; }
+
+  .body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .fox { width: 120px; margin: 0 auto 8px; display: block; filter: drop-shadow(0 6px 12px rgba(0,0,0,.2)); animation: float 3.5s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  h1 { font-size: 20px; color: #232544; text-align: center; }
+  .lead { font-size: 13px; color: #7a7fa6; text-align: center; line-height: 1.7; margin-top: 10px; }
+  .q { font-size: 17px; font-weight: 700; color: #232544; margin-bottom: 4px; }
+  .qsub { font-size: 12px; color: #9498bc; margin-bottom: 16px; }
+
+  .opts { display: flex; flex-direction: column; gap: 9px; }
+  .opts.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .opt {
+    border: 1.5px solid #e3e6f5; border-radius: 13px; padding: 12px 14px; cursor: pointer;
+    display: flex; align-items: center; gap: 10px; transition: .15s; background: #fff;
+  }
+  .opt:hover { border-color: #b9c0f0; }
+  .opt.sel { border-color: #6c7cff; background: #f0f2ff; box-shadow: 0 2px 10px rgba(108,124,255,.15); }
+  .opt .ico { font-size: 20px; }
+  .opt .t { font-size: 13.5px; color: #2f3357; font-weight: 600; }
+  .opt .d { font-size: 11px; color: #9498bc; margin-top: 1px; }
+  .opt .col { display: flex; flex-direction: column; }
+  .check { margin-left: auto; color: #6c7cff; font-weight: 700; opacity: 0; }
+  .opt.sel .check { opacity: 1; }
+
+  .dnd { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
+  .dnd input { padding: 6px 8px; border: 1px solid #d7dbf0; border-radius: 8px; font-size: 13px; }
+  .dnd .lbl { font-size: 12px; color: #9498bc; }
+
+  .nav { display: flex; gap: 10px; margin-top: 16px; }
+  button { border: none; border-radius: 12px; padding: 12px 0; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: transform .1s, opacity .15s; }
+  button:active { transform: scale(.97); }
+  #back { flex: .55; background: #eceeff; color: #6a6f9c; }
+  #next { flex: 1; background: #6c7cff; color: #fff; }
+  #next:disabled { opacity: .4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+  <div id="card">
+    <div class="top">
+      <div class="dots" id="dots"></div>
+      <span class="skip" id="skip">跳过，用默认 →</span>
+    </div>
+    <div class="body" id="body"></div>
+    <div class="nav">
+      <button id="back" style="display:none">上一步</button>
+      <button id="next">开始</button>
+    </div>
+  </div>
+
+<script>
+  const answers = { painAreas: [], workStyle: '', frequency: '', intensity: '', duration: '', dndStart: '', dndEnd: '' };
+
+  const STEPS = [
+    { type: 'welcome' },
+    {
+      type: 'multi', key: 'painAreas', q: '你哪里最容易累？', sub: '可多选，灵狐会多推这些部位的动作', grid: true,
+      opts: [
+        { v: 'eyes', ico: '👀', t: '眼睛' }, { v: 'neck_shoulder', ico: '🧣', t: '肩颈' },
+        { v: 'wrist', ico: '✋', t: '手腕' }, { v: 'back', ico: '🪑', t: '腰背' },
+        { v: 'legs', ico: '🦵', t: '腿脚' }, { v: 'mental', ico: '🧠', t: '精神疲劳' }
+      ]
+    },
+    {
+      type: 'single', key: 'workStyle', q: '你平时怎么工作？', sub: '决定灵狐主要在什么时候出现',
+      opts: [
+        { v: 'wait_ai', ico: '🤖', t: '常等 AI 跑', d: 'vibe coding，等回复的间隙最多' },
+        { v: 'deep_focus', ico: '🎯', t: '长时间专注不停手', d: '一写就是一两小时' },
+        { v: 'meetings', ico: '💬', t: '会议 / 离开多', d: '经常开会、离开电脑' }
+      ]
+    },
+    {
+      type: 'single', key: 'frequency', q: '希望多久提醒一次？', sub: '之后随时能在面板里调',
+      opts: [
+        { v: 'dense', ico: '🔔', t: '密集', d: '大约每 20 分钟' },
+        { v: 'medium', ico: '🌤', t: '适中', d: '大约每 35 分钟（推荐）' },
+        { v: 'sparse', ico: '🍃', t: '稀疏', d: '大约每 60 分钟' }
+      ]
+    },
+    {
+      type: 'single', key: 'intensity', q: '希望灵狐多“坚持”？', sub: '你爱跳过的话，坚定一点更有用',
+      opts: [
+        { v: 'gentle', ico: '🫧', t: '温柔', d: '轻轻提示，随手就能跳过' },
+        { v: 'firm', ico: '💪', t: '坚定', d: '更早抓住你、更会催你动' }
+      ]
+    },
+    {
+      type: 'single', key: 'duration', q: '每次想活动多久？', sub: '灵狐会挑合适时长的动作', dnd: true,
+      opts: [
+        { v: 'short', ico: '⚡', t: '30 秒就好', d: '快速回血' },
+        { v: 'medium', ico: '⏳', t: '1-2 分钟', d: '舒展开一点' },
+        { v: 'any', ico: '🎲', t: '都行', d: '交给灵狐安排' }
+      ]
+    },
+    { type: 'finish' }
+  ];
+
+  let step = 0;
+  const body = document.getElementById('body');
+  const dotsEl = document.getElementById('dots');
+  const nextBtn = document.getElementById('next');
+  const backBtn = document.getElementById('back');
+
+  function renderDots() {
+    dotsEl.innerHTML = '';
+    STEPS.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === step ? ' on' : '');
+      dotsEl.appendChild(d);
+    });
+  }
+
+  function optionCard(o, selected) {
+    const hasDesc = !!o.d;
+    return `<div class="opt${selected ? ' sel' : ''}" data-v="${o.v}">
+      <span class="ico">${o.ico}</span>
+      <span class="col"><span class="t">${o.t}</span>${hasDesc ? `<span class="d">${o.d}</span>` : ''}</span>
+      <span class="check">✓</span>
+    </div>`;
+  }
+
+  function render() {
+    const s = STEPS[step];
+    renderDots();
+    backBtn.style.display = step > 0 && s.type !== 'finish' ? 'block' : (step > 0 ? 'block' : 'none');
+
+    if (s.type === 'welcome') {
+      body.innerHTML = `
+        <img class="fox" src="../../assets/character/fox.png" />
+        <h1>你好，我是灵狐 🦊</h1>
+        <p class="lead">我会在你写代码久了、或等 AI 回复的间隙<br>轻轻提醒你活动一下身体。<br><br>先花 20 秒告诉我你的习惯，<br>我就能更懂你。</p>`;
+      nextBtn.textContent = '开始';
+      nextBtn.disabled = false;
+      return;
+    }
+
+    if (s.type === 'finish') {
+      const areaNames = { eyes: '眼睛', neck_shoulder: '肩颈', wrist: '手腕', back: '腰背', legs: '腿脚', mental: '精神' };
+      const areas = answers.painAreas.map((a) => areaNames[a]).join('、') || '全身';
+      body.innerHTML = `
+        <img class="fox" src="../../assets/character/fox.png" />
+        <h1>好啦，交给我 ✨</h1>
+        <p class="lead">我会重点照顾你的 <b style="color:#6c7cff">${areas}</b>，<br>用你选的节奏温柔提醒。<br><br>之后想改，点我一下就能进设置。</p>`;
+      nextBtn.textContent = '开始使用';
+      nextBtn.disabled = false;
+      backBtn.style.display = 'block';
+      return;
+    }
+
+    // 问题步骤
+    const sel = s.type === 'multi' ? answers[s.key] : [answers[s.key]];
+    let html = `<div class="q">${s.q}</div><div class="qsub">${s.sub}</div>`;
+    html += `<div class="opts${s.grid ? ' grid' : ''}">` + s.opts.map((o) => optionCard(o, sel.includes(o.v))).join('') + `</div>`;
+    if (s.dnd) {
+      html += `<div class="dnd"><span class="lbl">勿扰时段（可选）</span>
+        <input type="time" id="dndStart" value="${answers.dndStart}"> - <input type="time" id="dndEnd" value="${answers.dndEnd}"></div>`;
+    }
+    body.innerHTML = html;
+    nextBtn.textContent = '下一步';
+
+    body.querySelectorAll('.opt').forEach((el) => {
+      el.onclick = () => {
+        const v = el.dataset.v;
+        if (s.type === 'multi') {
+          const arr = answers[s.key];
+          const i = arr.indexOf(v);
+          if (i >= 0) arr.splice(i, 1); else arr.push(v);
+        } else {
+          answers[s.key] = v;
+        }
+        render();
+      };
+    });
+    if (s.dnd) {
+      body.querySelector('#dndStart').onchange = (e) => (answers.dndStart = e.target.value);
+      body.querySelector('#dndEnd').onchange = (e) => (answers.dndEnd = e.target.value);
+    }
+    updateNextEnabled();
+  }
+
+  function updateNextEnabled() {
+    const s = STEPS[step];
+    if (s.type === 'multi') nextBtn.disabled = false; // 痛点可不选
+    else if (s.type === 'single') nextBtn.disabled = !answers[s.key];
+    else nextBtn.disabled = false;
+  }
+
+  nextBtn.onclick = () => {
+    const s = STEPS[step];
+    if (s.type === 'finish') { window.buddy.submitOnboarding(answers); return; }
+    if (s.type === 'single' && !answers[s.key]) return;
+    step++;
+    render();
+  };
+  backBtn.onclick = () => { if (step > 0) { step--; render(); } };
+  document.getElementById('skip').onclick = () => window.buddy.skipOnboarding();
+
+  render();
+</script>
+</body>
+</html>

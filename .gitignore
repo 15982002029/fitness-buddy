@@ -1,0 +1,18 @@
+# 依赖 & 构建产物
+node_modules/
+release/
+dist/
+*.log
+
+# 本地用户数据（不该进仓库）
+fitness-buddy.json
+
+# 系统 & 编辑器
+.DS_Store
+.vscode/
+.idea/
+.claude/
+
+# 临时
+/tmp/
+*.tmp

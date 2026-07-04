@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: transparent; font-family: -apple-system, "PingFang SC", sans-serif; overflow: hidden; }
+  #card {
+    margin: 10px;
+    height: calc(100vh - 20px);
+    background: linear-gradient(160deg, #ffffff 0%, #f5f7ff 100%);
+    border-radius: 18px;
+    box-shadow: 0 12px 40px rgba(40,50,90,.28);
+    padding: 18px 18px 14px;
+    display: flex; flex-direction: column;
+    border: 1px solid rgba(120,130,200,.18);
+  }
+  #label { font-size: 12px; color: #7a7fa6; display: flex; align-items: center; gap: 6px; }
+  #label .dot { width: 7px; height: 7px; border-radius: 50%; background: #6c7cff; }
+  #name { font-size: 20px; font-weight: 700; color: #232544; margin: 8px 0 2px; }
+  #meta { font-size: 12px; color: #9094b8; margin-bottom: 10px; }
+  #steps { list-style: none; flex: 1; overflow-y: auto; }
+  #steps li {
+    font-size: 13px; color: #3c3f63; line-height: 1.5; padding: 3px 0 3px 20px; position: relative;
+  }
+  #steps li::before { content: ""; position: absolute; left: 4px; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: #c3c8f0; }
+  #caution { font-size: 11px; color: #b08; opacity: .7; margin: 8px 0 10px; line-height: 1.4; }
+  #btns { display: flex; gap: 8px; }
+  button {
+    flex: 1; border: none; border-radius: 10px; padding: 10px 0; font-size: 13px;
+    cursor: pointer; font-family: inherit; font-weight: 600; transition: transform .1s, opacity .15s;
+  }
+  button:active { transform: scale(.96); }
+  #done { background: #6c7cff; color: #fff; flex: 1.4; }
+  #snooze { background: #eceeffe0; color: #5a5f8c; }
+  #skip { background: transparent; color: #a0a4c0; flex: .7; }
+  #timer { font-size: 12px; color: #6c7cff; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div id="card">
+    <div id="label"><span class="dot"></span><span id="labelText">该活动一下啦</span></div>
+    <div id="name">动作</div>
+    <div id="meta"><span id="duration"></span> · <span id="timer"></span></div>
+    <ul id="steps"></ul>
+    <div id="caution"></div>
+    <div id="btns">
+      <button id="done">完成 ✓</button>
+      <button id="snooze">5 分钟后</button>
+      <button id="skip">跳过</button>
+    </div>
+  </div>
+<script>
+  let countdown = null;
+
+  window.buddy.onReminder(({ label, exercise }) => {
+    document.getElementById('labelText').textContent = label || '该活动一下啦';
+    document.getElementById('name').textContent = exercise.name;
+    document.getElementById('duration').textContent = `约 ${exercise.durationSec} 秒`;
+
+    const ul = document.getElementById('steps');
+    ul.innerHTML = '';
+    exercise.steps.forEach((s) => {
+      const li = document.createElement('li');
+      li.textContent = s;
+      ul.appendChild(li);
+    });
+    document.getElementById('caution').textContent = exercise.caution ? '⚠ ' + exercise.caution : '';
+
+    // 一个轻量倒计时，帮你感知动作时长
+    let left = exercise.durationSec;
+    const timer = document.getElementById('timer');
+    timer.textContent = `倒计时 ${left}s`;
+    if (countdown) clearInterval(countdown);
+    countdown = setInterval(() => {
+      left -= 1;
+      timer.textContent = left > 0 ? `倒计时 ${left}s` : '可以了 🎉';
+      if (left <= 0) clearInterval(countdown);
+    }, 1000);
+  });
+
+  document.getElementById('done').onclick = () => window.buddy.complete();
+  document.getElementById('snooze').onclick = () => window.buddy.snooze(5);
+  document.getElementById('skip').onclick = () => window.buddy.skip();
+</script>
+</body>
+</html>
