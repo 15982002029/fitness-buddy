@@ -49,12 +49,17 @@
     opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   #wrap:hover #bubble { opacity: 1; }
-  #stats {
-    margin-top: 2px; font-size: 10px; color: #fff;
-    background: rgba(30,30,40,.82); padding: 2px 8px; border-radius: 8px;
-    opacity: 0; transition: opacity .2s; white-space: nowrap;
+  #info {
+    margin-top: 2px; display: flex; flex-direction: column; gap: 2px; align-items: center;
+    opacity: 0; transition: opacity .2s;
   }
-  #wrap:hover #stats { opacity: 1; }
+  #wrap:hover #info { opacity: 1; }
+  #sitline, #stats {
+    font-size: 10px; color: #fff;
+    background: rgba(30,30,40,.82); padding: 2px 8px; border-radius: 8px;
+    white-space: nowrap;
+  }
+  #sitline b { color: #ffd479; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -64,7 +69,10 @@
       <img id="pet" src="../../assets/character/fox.png" alt="灵狐" draggable="false" />
       <div id="emote">💤</div>
     </div>
-    <div id="stats">加载中…</div>
+    <div id="info">
+      <div id="sitline">刚坐下</div>
+      <div id="stats">加载中…</div>
+    </div>
   </div>
 <script>
   const pet = document.getElementById('pet');
@@ -79,14 +87,43 @@
   };
   const EMOTE = { normal: '', tired: '💤', happy: '✨' };
 
+  let curState = 'normal';
+  let lastWear = 0;
+
+  // 灵狐随连坐时间渐变：坐越久越蔫（降饱和、变暗、微微垂头）。
+  // 只在 normal 状态下生效；tired/happy 有自己的 class 样式。
+  function applyWear(wear) {
+    lastWear = wear;
+    if (curState !== 'normal') { pet.style.filter = ''; pet.style.transform = ''; return; }
+    const sat = (1 - 0.4 * wear).toFixed(2);
+    const bri = (1 - 0.08 * wear).toFixed(2);
+    pet.style.filter = `drop-shadow(0 6px 10px rgba(0,0,0,.28)) saturate(${sat}) brightness(${bri})`;
+  }
+
   window.buddy.onPetState(({ state }) => {
+    curState = state;
     pet.className = state === 'normal' ? '' : state;
     bubble.textContent = WORD[state] || WORD.normal;
     emote.textContent = EMOTE[state] || '';
+    applyWear(lastWear); // normal 时恢复渐变，其他状态清掉内联样式让 class 生效
   });
 
   window.buddy.onStats((s) => {
     statsEl.textContent = `完成 ${s.completedCount} · 跳过 ${s.skippedCount} · 喝水 ${s.waterCount} · 连续 ${s.streak} 天`;
+  });
+
+  const sitline = document.getElementById('sitline');
+  window.buddy.onVitals((v) => {
+    applyWear(v.progress || 0);
+    if (v.pausedUntil) {
+      const d = new Date(v.pausedUntil);
+      sitline.innerHTML = `⏸ 已暂停到 ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+    } else if (v.sittingMin < 1) {
+      sitline.textContent = '刚坐下，状态很好 ✨';
+    } else {
+      const next = v.nextInMin <= 0 ? '等你停手就提醒' : `下次提醒 ~${v.nextInMin} 分后`;
+      sitline.innerHTML = `已连坐 <b>${v.sittingMin}</b> 分 · ${next}`;
+    }
   });
 
   // 手动拖拽 + 点击识别（因为不能用 -webkit-app-region:drag，否则 click 不触发）

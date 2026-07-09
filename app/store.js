@@ -6,12 +6,10 @@ const { app } = require('electron');
 const DATA_FILE = path.join(app.getPath('userData'), 'fitness-buddy.json');
 
 const DEFAULT_SETTINGS = {
-  // 等 AI 回复检测：前台是编码工具 + 停手超过这么多秒，就认为你在等 AI，可以提醒
-  aiWaitIdleSec: 25,
-  // 两次提醒最小间隔（分钟），避免太频繁
-  reminderCooldownMin: 20,
-  // 兜底：就算不在编码工具里，久坐这么多分钟也提醒一次
-  maxSittingMin: 50,
+  // 休息到期间隔（分钟）：每隔这么久，休息才“到期”一次
+  breakIntervalMin: 40,
+  // 停顿判定（秒）：到期后要停手这么久才弹（敲键盘时绝不弹）
+  pauseSec: 30,
   // 喝水提醒间隔（分钟）
   waterIntervalMin: 90,
   // 勿扰时间段，格式 "HH:MM"，留空表示不启用
@@ -23,13 +21,16 @@ const DEFAULT_SETTINGS = {
     'terminal', 'iterm', 'warp', 'ghostty', 'kitty', 'alacritty',
     'claude', 'chatgpt', 'xcode', 'zed', 'sublime'
   ],
-  petSize: 110,
-  autoDismissOnReturn: true
+  // 这些 App 在前台时不弹提醒（开会场景）；全屏时也一律不弹
+  excludedApps: ['zoom', 'tencentmeeting', '腾讯会议', 'webex', '会议'],
+  petSize: 110
 };
 
 // 用户画像（由首次 onboarding 问卷生成，影响动作推荐与触发策略）
 const DEFAULT_PROFILE = {
-  painAreas: [],                 // ['eyes','neck_shoulder','wrist','back','legs','mental']
+  // 用户愿意在休息时做的活动类别（对应动作库 category）；空 = 全部允许
+  // 类别：water/eyes/breathing/shoulder_neck（养身） stand/legs/wrist/back（健身）
+  activities: [],
   preferredMaxDurationSec: 999,  // 每次想活动多久
   workStyle: '',                 // 'wait_ai' | 'deep_focus' | 'meetings'
   intensity: 'gentle'            // 'gentle' | 'firm'
@@ -54,11 +55,12 @@ function load() {
       profile: { ...DEFAULT_PROFILE, ...(raw.profile || {}) },
       onboarded: !!raw.onboarded,
       daily: raw.daily || emptyDaily(todayStr()),
+      history: Array.isArray(raw.history) ? raw.history : [],
       streak: raw.streak || 0,
       lastActiveDate: raw.lastActiveDate || null
     };
   } catch {
-    return { settings: { ...DEFAULT_SETTINGS }, profile: { ...DEFAULT_PROFILE }, onboarded: false, daily: emptyDaily(todayStr()), streak: 0, lastActiveDate: null };
+    return { settings: { ...DEFAULT_SETTINGS }, profile: { ...DEFAULT_PROFILE }, onboarded: false, daily: emptyDaily(todayStr()), history: [], streak: 0, lastActiveDate: null };
   }
 }
 
@@ -84,6 +86,9 @@ function rolloverIfNeeded() {
     state.streak = diffDays === 1 ? state.streak + 1 : 1;
     state.lastActiveDate = state.daily.date;
   }
+  // 归档到历史（保留最近 14 天）
+  state.history.push({ ...state.daily });
+  if (state.history.length > 14) state.history = state.history.slice(-14);
   state.daily = emptyDaily(t);
   persist();
 }
@@ -92,13 +97,11 @@ function rolloverIfNeeded() {
 function onboardingToConfig(answers) {
   const settingsPatch = {};
 
-  // 提醒频率 → 冷却 + 久坐兜底
-  const freq = { dense: [15, 35], medium: [25, 50], sparse: [40, 75] }[answers.frequency] || [25, 50];
-  settingsPatch.reminderCooldownMin = freq[0];
-  settingsPatch.maxSittingMin = freq[1];
+  // 提醒频率 → 休息到期间隔（分钟）
+  settingsPatch.breakIntervalMin = { dense: 25, medium: 40, sparse: 60 }[answers.frequency] || 40;
 
-  // 打扰强度 → 停手判定秒数（坚定=更早抓到你）
-  settingsPatch.aiWaitIdleSec = answers.intensity === 'firm' ? 18 : 30;
+  // 打扰强度 → 停顿判定（坚定=你刚停手就弹；温柔=多等一会儿再弹）
+  settingsPatch.pauseSec = answers.intensity === 'firm' ? 20 : 40;
 
   // 勿扰时段（可选）
   if (answers.dndStart) settingsPatch.dndStart = answers.dndStart;
@@ -108,7 +111,7 @@ function onboardingToConfig(answers) {
   const dur = { short: 35, medium: 120, any: 999 }[answers.duration] || 999;
 
   const profile = {
-    painAreas: Array.isArray(answers.painAreas) ? answers.painAreas : [],
+    activities: Array.isArray(answers.activities) ? answers.activities : [],
     preferredMaxDurationSec: dur,
     workStyle: answers.workStyle || '',
     intensity: answers.intensity || 'gentle'
@@ -147,9 +150,37 @@ module.exports = {
     persist();
     return state.settings;
   },
+  updateProfile(patch) {
+    state.profile = { ...state.profile, ...patch };
+    persist();
+    return state.profile;
+  },
   getStats() {
     rolloverIfNeeded();
     return { ...state.daily, streak: state.streak };
+  },
+  // 最近 7 天（含今天），缺的日期补零，给面板画小柱状图
+  getWeek() {
+    rolloverIfNeeded();
+    const byDate = {};
+    state.history.forEach((d) => { byDate[d.date] = d; });
+    byDate[state.daily.date] = state.daily;
+    const out = [];
+    for (let i = 6; i >= 0; i--) {
+      const dt = new Date(Date.now() - i * 86400000);
+      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+      const d = byDate[key] || emptyDaily(key);
+      out.push({ date: key, day: '日一二三四五六'[dt.getDay()], completedCount: d.completedCount, waterCount: d.waterCount, activeBreakSeconds: d.activeBreakSeconds || 0 });
+    }
+    return out;
+  },
+  // 只记一杯水（用户自己喝了，主动点一下），不算“完成一次休息”
+  recordWater() {
+    rolloverIfNeeded();
+    state.daily.waterCount += 1;
+    if (state.streak === 0) state.streak = 1;
+    persist();
+    return this.getStats();
   },
   recordComplete(exercise) {
     rolloverIfNeeded();

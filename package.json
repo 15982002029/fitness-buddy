@@ -1,6 +1,6 @@
 {
   "name": "fitness-buddy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "会在你等 AI 回复的间隙提醒你活动的桌面健身宠物",
   "main": "app/main.js",
   "scripts": {

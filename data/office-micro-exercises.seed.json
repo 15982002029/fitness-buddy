@@ -4,7 +4,9 @@
     "name": "20 秒远眺",
     "category": "eyes",
     "durationSec": 20,
-    "bodyArea": ["eyes"],
+    "bodyArea": [
+      "eyes"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -13,14 +15,17 @@
       "放松眼周，不要眯眼。",
       "保持自然呼吸 20 秒。"
     ],
-    "caution": "如果已经出现明显眼痛、头痛或视力异常，不要只依赖提醒工具，应咨询专业人士。"
+    "caution": "如果已经出现明显眼痛、头痛或视力异常，不要只依赖提醒工具，应咨询专业人士。",
+    "why": "20-20-20 法则：定期看远处 20 秒，能放松持续紧张的睫状肌，缓解视疲劳。"
   },
   {
     "id": "eye-palming",
     "name": "手心捂眼",
     "category": "eyes",
     "durationSec": 30,
-    "bodyArea": ["eyes"],
+    "bodyArea": [
+      "eyes"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -29,14 +34,17 @@
       "在黑暗中放松 30 秒。",
       "慢慢移开双手，眨几下眼。"
     ],
-    "caution": "手要干净，避免揉眼造成感染。"
+    "caution": "手要干净，避免揉眼造成感染。",
+    "why": "手心的温热和完全的黑暗能让视神经彻底放松，比单纯闭眼更解乏。"
   },
   {
     "id": "eye-figure-eight",
     "name": "眼球画八字",
     "category": "eyes",
     "durationSec": 30,
-    "bodyArea": ["eyes"],
+    "bodyArea": [
+      "eyes"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -45,14 +53,18 @@
       "顺时针 15 秒，逆时针 15 秒。",
       "全程头不动，只动眼睛。"
     ],
-    "caution": "出现头晕就停止。"
+    "caution": "出现头晕就停止。",
+    "why": "带动眼外肌全方向活动，缓解长时间盯屏造成的眼球转动僵硬。"
   },
   {
     "id": "wrist-extension-45",
     "name": "手腕伸展",
     "category": "wrist",
     "durationSec": 45,
-    "bodyArea": ["wrist", "forearm"],
+    "bodyArea": [
+      "wrist",
+      "forearm"
+    ],
     "equipment": "none",
     "intensity": "light",
     "steps": [
@@ -61,14 +73,18 @@
       "保持 15 秒，换另一侧。",
       "力度保持舒适，不要拉到疼痛。"
     ],
-    "caution": "如果手腕已有损伤、麻木或刺痛，动作要停止并寻求专业建议。"
+    "caution": "如果手腕已有损伤、麻木或刺痛，动作要停止并寻求专业建议。",
+    "why": "打字时腕伸肌长期紧绷，反向牵拉能预防鼠标手（腕管综合征）。"
   },
   {
     "id": "wrist-flexion-45",
     "name": "手腕下压伸展",
     "category": "wrist",
     "durationSec": 45,
-    "bodyArea": ["wrist", "forearm"],
+    "bodyArea": [
+      "wrist",
+      "forearm"
+    ],
     "equipment": "none",
     "intensity": "light",
     "steps": [
@@ -77,14 +93,17 @@
       "保持 15 秒，换另一侧。",
       "感受前臂上侧的轻微拉伸。"
     ],
-    "caution": "刺痛或麻木立即停止。"
+    "caution": "刺痛或麻木立即停止。",
+    "why": "和向后伸展互补，放松前臂另一侧肌群，让手腕两侧受力平衡。"
   },
   {
     "id": "wrist-circles-30",
     "name": "手腕绕环",
     "category": "wrist",
     "durationSec": 30,
-    "bodyArea": ["wrist"],
+    "bodyArea": [
+      "wrist"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -93,14 +112,18 @@
       "再逆时针 10 圈。",
       "动作慢而放松。"
     ],
-    "caution": "幅度以舒适为准。"
+    "caution": "幅度以舒适为准。",
+    "why": "绕环促进腕关节滑液分泌，润滑关节、缓解打字后的僵硬感。"
   },
   {
     "id": "finger-stretch-30",
     "name": "手指张合",
     "category": "wrist",
     "durationSec": 30,
-    "bodyArea": ["wrist", "fingers"],
+    "bodyArea": [
+      "wrist",
+      "fingers"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -109,14 +132,18 @@
       "重复 10 次。",
       "感受手指和手掌的放松。"
     ],
-    "caution": "关节疼痛时减小力度。"
+    "caution": "关节疼痛时减小力度。",
+    "why": "用力张合促进手部血液回流，缓解长时间敲键盘的手指疲劳。"
   },
   {
     "id": "shoulder-roll-60",
     "name": "肩部绕环",
     "category": "shoulder_neck",
     "durationSec": 60,
-    "bodyArea": ["shoulder", "upper_back"],
+    "bodyArea": [
+      "shoulder",
+      "upper_back"
+    ],
     "equipment": "none",
     "intensity": "light",
     "steps": [
@@ -125,14 +152,17 @@
       "做 10 次后反方向再做 10 次。",
       "保持动作缓慢，不要耸肩用力过猛。"
     ],
-    "caution": "肩颈疼痛明显时不要强行大幅度绕环。"
+    "caution": "肩颈疼痛明显时不要强行大幅度绕环。",
+    "why": "打字姿势让肩胛长期前引，绕环能激活背部肌群、改善圆肩。"
   },
   {
     "id": "neck-reset-45",
     "name": "颈部轻复位",
     "category": "shoulder_neck",
     "durationSec": 45,
-    "bodyArea": ["neck"],
+    "bodyArea": [
+      "neck"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -141,14 +171,18 @@
       "感受后颈拉长，保持 5 秒。",
       "放松，重复 6 次。"
     ],
-    "caution": "动作要轻缓，避免快速甩头。"
+    "caution": "动作要轻缓，避免快速甩头。",
+    "why": "收下巴对抗“头前伸”：头每前伸一点，颈椎负担成倍增加，这个动作帮它复位。"
   },
   {
     "id": "neck-side-stretch-45",
     "name": "颈部侧拉伸",
     "category": "shoulder_neck",
     "durationSec": 45,
-    "bodyArea": ["neck", "shoulder"],
+    "bodyArea": [
+      "neck",
+      "shoulder"
+    ],
     "equipment": "none",
     "intensity": "light",
     "steps": [
@@ -157,14 +191,18 @@
       "保持 15 秒，换另一侧。",
       "不要用力下压，自然重量即可。"
     ],
-    "caution": "颈椎有病史者动作要格外轻柔或咨询医生。"
+    "caution": "颈椎有病史者动作要格外轻柔或咨询医生。",
+    "why": "拉伸上斜方肌——久坐者最容易紧张酸痛的部位之一。"
   },
   {
     "id": "chest-open-45",
     "name": "扩胸开肩",
     "category": "shoulder_neck",
     "durationSec": 45,
-    "bodyArea": ["chest", "shoulder"],
+    "bodyArea": [
+      "chest",
+      "shoulder"
+    ],
     "equipment": "none",
     "intensity": "light",
     "steps": [
@@ -173,14 +211,17 @@
       "感受胸前打开，保持 15 秒。",
       "缓慢放松，重复 2 次。"
     ],
-    "caution": "肩部有伤避免过度后展。"
+    "caution": "肩部有伤避免过度后展。",
+    "why": "打开长期蜷缩的胸廓，对抗含胸驼背，顺带帮助深呼吸。"
   },
   {
     "id": "upper-back-stretch-45",
     "name": "上背伸展",
     "category": "back",
     "durationSec": 45,
-    "bodyArea": ["upper_back"],
+    "bodyArea": [
+      "upper_back"
+    ],
     "equipment": "none",
     "intensity": "light",
     "steps": [
@@ -189,14 +230,18 @@
       "低头，感受上背拉伸，保持 15 秒。",
       "缓慢回正，重复 2 次。"
     ],
-    "caution": "动作缓慢，避免突然发力。"
+    "caution": "动作缓慢，避免突然发力。",
+    "why": "拉开肩胛骨之间的肌群，缓解上背部的紧绷酸胀。"
   },
   {
     "id": "seated-twist-45",
     "name": "坐姿脊柱扭转",
     "category": "back",
     "durationSec": 45,
-    "bodyArea": ["spine", "lower_back"],
+    "bodyArea": [
+      "spine",
+      "lower_back"
+    ],
     "equipment": "chair",
     "intensity": "light",
     "steps": [
@@ -205,14 +250,18 @@
       "保持 15 秒，目光随转动方向。",
       "回正后换另一侧。"
     ],
-    "caution": "腰部不适时减小幅度，不要硬转。"
+    "caution": "腰部不适时减小幅度，不要硬转。",
+    "why": "旋转能活动久坐僵住的胸腰椎小关节，促进椎间盘营养交换。"
   },
   {
     "id": "cat-cow-seated-60",
     "name": "坐姿猫牛式",
     "category": "back",
     "durationSec": 60,
-    "bodyArea": ["spine", "lower_back"],
+    "bodyArea": [
+      "spine",
+      "lower_back"
+    ],
     "equipment": "chair",
     "intensity": "light",
     "steps": [
@@ -221,14 +270,17 @@
       "呼气拱背收腹，低头看肚脐。",
       "缓慢交替 6 次，配合呼吸。"
     ],
-    "caution": "腰椎急性疼痛期不要做。"
+    "caution": "腰椎急性疼痛期不要做。",
+    "why": "让脊柱在屈伸之间活动开，是对久坐腰背最温和有效的放松之一。"
   },
   {
     "id": "stand-up-60",
     "name": "起身站立 60 秒",
     "category": "stand",
     "durationSec": 60,
-    "bodyArea": ["whole_body"],
+    "bodyArea": [
+      "whole_body"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -237,14 +289,18 @@
       "顺便倒杯水或走到窗边。",
       "让血液重新流动起来。"
     ],
-    "caution": "久坐后突然起身若头晕，先扶稳再走。"
+    "caution": "久坐后突然起身若头晕，先扶稳再走。",
+    "why": "久坐 30 分钟以上，起身 1 分钟就能明显改善下肢血液循环、重启代谢。"
   },
   {
     "id": "calf-raise-45",
     "name": "提踵（踮脚）",
     "category": "legs",
     "durationSec": 45,
-    "bodyArea": ["calf", "legs"],
+    "bodyArea": [
+      "calf",
+      "legs"
+    ],
     "equipment": "none",
     "intensity": "light",
     "steps": [
@@ -253,14 +309,18 @@
       "停 1 秒后缓慢落下。",
       "重复 15 次。"
     ],
-    "caution": "平衡不稳时扶住桌子。"
+    "caution": "平衡不稳时扶住桌子。",
+    "why": "小腿是“第二心脏”：提踵泵血帮下肢静脉回流，预防久坐腿胀。"
   },
   {
     "id": "hip-flexor-stretch-60",
     "name": "髋屈肌站立拉伸",
     "category": "legs",
     "durationSec": 60,
-    "bodyArea": ["hip", "legs"],
+    "bodyArea": [
+      "hip",
+      "legs"
+    ],
     "equipment": "none",
     "intensity": "light",
     "steps": [
@@ -269,14 +329,18 @@
       "保持 20 秒，换另一侧。",
       "上身保持直立。"
     ],
-    "caution": "膝盖不适时缩小步幅。"
+    "caution": "膝盖不适时缩小步幅。",
+    "why": "久坐让髋屈肌长期缩短——它是很多腰痛的隐藏元凶，站立拉伸能松开它。"
   },
   {
     "id": "leg-march-45",
     "name": "高抬腿原地踏步",
     "category": "legs",
     "durationSec": 45,
-    "bodyArea": ["legs", "core"],
+    "bodyArea": [
+      "legs",
+      "core"
+    ],
     "equipment": "none",
     "intensity": "moderate",
     "steps": [
@@ -285,14 +349,17 @@
       "持续 45 秒，呼吸均匀。",
       "感受心率轻微上升。"
     ],
-    "caution": "膝关节或心血管有问题者降低强度。"
+    "caution": "膝关节或心血管有问题者降低强度。",
+    "why": "快速拉高心率和血流，让久坐迟钝的身体重新“开机”。"
   },
   {
     "id": "water-drink",
     "name": "喝口水",
     "category": "water",
     "durationSec": 30,
-    "bodyArea": ["whole_body"],
+    "bodyArea": [
+      "whole_body"
+    ],
     "equipment": "cup",
     "intensity": "very_light",
     "steps": [
@@ -301,14 +368,17 @@
       "趁机活动一下身体。",
       "回来继续。"
     ],
-    "caution": "按个人情况适量饮水，特殊疾病遵医嘱。"
+    "caution": "按个人情况适量饮水，特殊疾病遵医嘱。",
+    "why": "轻度缺水就会让注意力和反应变慢；规律喝水还自然增加了起身次数。"
   },
   {
     "id": "deep-breath-60",
     "name": "深呼吸放松",
     "category": "breathing",
     "durationSec": 60,
-    "bodyArea": ["whole_body"],
+    "bodyArea": [
+      "whole_body"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -317,14 +387,18 @@
       "屏息 2 秒，再缓慢呼气 6 秒。",
       "重复 5 个循环。"
     ],
-    "caution": "呼吸过程中如感到头晕，恢复自然呼吸即可。"
+    "caution": "呼吸过程中如感到头晕，恢复自然呼吸即可。",
+    "why": "腹式呼吸激活副交感神经，几个循环就能明显放松紧绷的神经。"
   },
   {
     "id": "shoulder-shrug-30",
     "name": "耸肩放松",
     "category": "shoulder_neck",
     "durationSec": 30,
-    "bodyArea": ["shoulder", "neck"],
+    "bodyArea": [
+      "shoulder",
+      "neck"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -333,14 +407,18 @@
       "呼气，双肩突然放松落下。",
       "重复 8 次。"
     ],
-    "caution": "动作轻松即可，不要僵硬。"
+    "caution": "动作轻松即可，不要僵硬。",
+    "why": "先用力耸紧再突然放松，让斜方肌“卸力”，快速缓解肩部紧绷。"
   },
   {
     "id": "ankle-circles-30",
     "name": "脚踝绕环",
     "category": "legs",
     "durationSec": 30,
-    "bodyArea": ["ankle", "legs"],
+    "bodyArea": [
+      "ankle",
+      "legs"
+    ],
     "equipment": "none",
     "intensity": "very_light",
     "steps": [
@@ -349,14 +427,19 @@
       "换左脚重复。",
       "促进下肢血液循环。"
     ],
-    "caution": "脚踝有伤时减小幅度。"
+    "caution": "脚踝有伤时减小幅度。",
+    "why": "活动踝关节促进小腿血液回流，预防久坐时下肢发麻。"
   },
   {
     "id": "wall-pushup-60",
     "name": "靠墙俯卧撑",
     "category": "stand",
     "durationSec": 60,
-    "bodyArea": ["chest", "arm", "core"],
+    "bodyArea": [
+      "chest",
+      "arm",
+      "core"
+    ],
     "equipment": "wall",
     "intensity": "moderate",
     "steps": [
@@ -365,6 +448,7 @@
       "再推回原位，重复 12 次。",
       "全程收紧核心。"
     ],
-    "caution": "手腕或肩部疼痛时停止。"
+    "caution": "手腕或肩部疼痛时停止。",
+    "why": "温和激活胸、肩和核心，不用下地就能让上肢发力、提神醒脑。"
   }
 ]

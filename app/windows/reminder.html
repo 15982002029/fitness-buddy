@@ -15,39 +15,62 @@
     display: flex; flex-direction: column;
     border: 1px solid rgba(120,130,200,.18);
   }
+  #head { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+  #fox {
+    width: 76px; height: 76px; flex-shrink: 0; object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,.18));
+    animation: bob 2.8s ease-in-out infinite;
+  }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+  #headtext { flex: 1; min-width: 0; }
   #label { font-size: 12px; color: #7a7fa6; display: flex; align-items: center; gap: 6px; }
   #label .dot { width: 7px; height: 7px; border-radius: 50%; background: #6c7cff; }
-  #name { font-size: 20px; font-weight: 700; color: #232544; margin: 8px 0 2px; }
-  #meta { font-size: 12px; color: #9094b8; margin-bottom: 10px; }
+  #name { font-size: 19px; font-weight: 700; color: #232544; margin: 6px 0 2px; }
+  #meta { font-size: 12px; color: #9094b8; }
+  #why {
+    font-size: 12px; color: #5a6bd8; background: #eef0ff99; border-radius: 9px;
+    padding: 7px 10px; margin-bottom: 8px; line-height: 1.5; display: none;
+  }
   #steps { list-style: none; flex: 1; overflow-y: auto; }
   #steps li {
     font-size: 13px; color: #3c3f63; line-height: 1.5; padding: 3px 0 3px 20px; position: relative;
   }
   #steps li::before { content: ""; position: absolute; left: 4px; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: #c3c8f0; }
   #caution { font-size: 11px; color: #b08; opacity: .7; margin: 8px 0 10px; line-height: 1.4; }
-  #btns { display: flex; gap: 8px; }
+  #btns { display: flex; flex-direction: column; gap: 7px; }
+  .btnrow { display: flex; gap: 8px; }
   button {
     flex: 1; border: none; border-radius: 10px; padding: 10px 0; font-size: 13px;
     cursor: pointer; font-family: inherit; font-weight: 600; transition: transform .1s, opacity .15s;
   }
   button:active { transform: scale(.96); }
-  #done { background: #6c7cff; color: #fff; flex: 1.4; }
-  #snooze { background: #eceeffe0; color: #5a5f8c; }
+  #done { background: #6c7cff; color: #fff; }
+  #done:disabled { opacity: .45; cursor: default; }
+  #another, #wait { background: #eceeffe0; color: #5a5f8c; }
   #skip { background: transparent; color: #a0a4c0; flex: .7; }
   #timer { font-size: 12px; color: #6c7cff; font-weight: 600; }
 </style>
 </head>
 <body>
   <div id="card">
-    <div id="label"><span class="dot"></span><span id="labelText">该活动一下啦</span></div>
-    <div id="name">动作</div>
-    <div id="meta"><span id="duration"></span> · <span id="timer"></span></div>
+    <div id="head">
+      <img id="fox" src="../../assets/character/fox.png" alt="灵狐" />
+      <div id="headtext">
+        <div id="label"><span class="dot"></span><span id="labelText">该活动一下啦</span></div>
+        <div id="name">动作</div>
+        <div id="meta"><span id="duration"></span> · <span id="timer"></span></div>
+      </div>
+    </div>
+    <div id="why"></div>
     <ul id="steps"></ul>
     <div id="caution"></div>
     <div id="btns">
-      <button id="done">完成 ✓</button>
-      <button id="snooze">5 分钟后</button>
-      <button id="skip">跳过</button>
+      <div class="btnrow"><button id="done" disabled>完成 ✓</button></div>
+      <div class="btnrow">
+        <button id="another">换一个</button>
+        <button id="wait">等一下</button>
+        <button id="skip">跳过</button>
+      </div>
     </div>
   </div>
 <script>
@@ -58,29 +81,63 @@
     document.getElementById('name').textContent = exercise.name;
     document.getElementById('duration').textContent = `约 ${exercise.durationSec} 秒`;
 
+    // 按大类显示灵狐动画；没有对应动画素材时自动回落到静止灵狐
+    const fox = document.getElementById('fox');
+    const group = exercise.group || 'general';
+    fox.onerror = () => { fox.onerror = null; fox.src = '../../assets/character/fox.png'; };
+    fox.src = `../../assets/character/anim/${group}.gif`;
+
     const ul = document.getElementById('steps');
     ul.innerHTML = '';
-    exercise.steps.forEach((s) => {
+    const steps = exercise.steps || [];
+    if (steps.length) {
+      steps.forEach((s) => {
+        const li = document.createElement('li');
+        li.textContent = s;
+        ul.appendChild(li);
+      });
+    } else {
+      // 自定义活动没有步骤 —— 就是你自己的事，按你的方式做
       const li = document.createElement('li');
-      li.textContent = s;
+      li.textContent = '按你自己的方式做就好，做完点「完成」🦊';
       ul.appendChild(li);
-    });
+    }
     document.getElementById('caution').textContent = exercise.caution ? '⚠ ' + exercise.caution : '';
 
-    // 一个轻量倒计时，帮你感知动作时长
+    // 「为什么有用」：让用户知道这不是随便编的
+    const whyEl = document.getElementById('why');
+    if (exercise.why) {
+      whyEl.textContent = '💡 ' + exercise.why;
+      whyEl.style.display = 'block';
+    } else {
+      whyEl.style.display = 'none';
+    }
+
+    // 倒计时走完，「完成」才亮 —— 点了完成 ≈ 真的做了，统计才有意义
+    const done = document.getElementById('done');
     let left = exercise.durationSec;
     const timer = document.getElementById('timer');
     timer.textContent = `倒计时 ${left}s`;
+    done.disabled = true;
+    done.textContent = `完成（${left}s）`;
     if (countdown) clearInterval(countdown);
     countdown = setInterval(() => {
       left -= 1;
-      timer.textContent = left > 0 ? `倒计时 ${left}s` : '可以了 🎉';
-      if (left <= 0) clearInterval(countdown);
+      if (left > 0) {
+        timer.textContent = `倒计时 ${left}s`;
+        done.textContent = `完成（${left}s）`;
+      } else {
+        timer.textContent = '可以了 🎉';
+        done.textContent = '完成 ✓';
+        done.disabled = false;
+        clearInterval(countdown);
+      }
     }, 1000);
   });
 
   document.getElementById('done').onclick = () => window.buddy.complete();
-  document.getElementById('snooze').onclick = () => window.buddy.snooze(5);
+  document.getElementById('another').onclick = () => window.buddy.another();
+  document.getElementById('wait').onclick = () => window.buddy.wait();
   document.getElementById('skip').onclick = () => window.buddy.skip();
 </script>
 </body>

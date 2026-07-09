@@ -15,7 +15,10 @@ let onboardingWin = null;
 let engine = null;
 let pollTimer = null;
 let currentExercise = null; // 当前正在提示的动作
+let reminderTimeout = null; // 提醒卡无人理会时的自动收起计时
 let petState = 'normal'; // normal | tired | happy
+let sittingStartAt = Date.now(); // 本段连坐的开始时间（完成活动或离开电脑后重置）
+let pausedUntil = 0; // 暂停提醒到这个时间点
 
 const POLL_MS = 5000; // 每 5 秒采样一次
 const isDev = process.argv.includes('--dev');
@@ -54,14 +57,16 @@ function createReminderWindow(payload) {
     reminderWin.showInactive();
     return;
   }
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  const w = 360;
-  const h = 300;
+  // 弹在鼠标所在的屏幕（多显示器时别弹去主屏没人看的角落）
+  const disp = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
+  const wa = disp.workArea;
+  const w = 380;
+  const h = 380;
   reminderWin = new BrowserWindow({
     width: w,
     height: h,
-    x: width - w - 24,
-    y: height - h - 24,
+    x: wa.x + wa.width - w - 24,
+    y: wa.y + wa.height - h - 24,
     frame: false,
     transparent: true,
     resizable: false,
@@ -81,6 +86,7 @@ function createReminderWindow(payload) {
 }
 
 function closeReminder() {
+  if (reminderTimeout) { clearTimeout(reminderTimeout); reminderTimeout = null; }
   if (reminderWin) {
     reminderWin.close();
     reminderWin = null;
@@ -93,8 +99,8 @@ function togglePanel() {
   if (panelWin) { closePanel(); return; }
   // 刚因 blur 关闭又立刻收到点击（点灵狐时会先 blur 面板）→ 视为“关闭”，不重开
   if (Date.now() - lastPanelCloseAt < 350) return;
-  const w = 320;
-  const h = 480;
+  const w = 340;
+  const h = 620;
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   // 尽量贴着桌宠显示
   let x = width - w - 40;
@@ -123,8 +129,8 @@ function closePanel() {
 // 主动来一个动作（托盘和面板都用）
 function triggerManualExercise() {
   if (reminderWin) return;
-  const { pickExercise } = require('./reminder-engine');
-  showReminder({ label: '主动休息一下', reason: 'manual', exercise: pickExercise(null, store.getProfile()) });
+  const { chooseBreakContent } = require('./reminder-engine');
+  showReminder({ label: '主动休息一下', reason: 'manual', exercise: chooseBreakContent(store.getProfile()) });
 }
 
 // 首次运行的问卷引导窗
@@ -170,24 +176,89 @@ function showReminder(decision) {
     exercise: decision.exercise
   });
   engine.noteReminderShown();
+  // 没人理的话，自己静静收起（不算跳过、不算完成）。
+  // 时长要比动作倒计时长：完成按钮要倒计时结束才亮，别在那之前把卡收走。
+  if (reminderTimeout) clearTimeout(reminderTimeout);
+  const graceMs = Math.max(90000, (decision.exercise?.durationSec || 60) * 1000 + 45000);
+  reminderTimeout = setTimeout(() => {
+    if (reminderWin) { closeReminder(); setPetState('normal'); }
+  }, graceMs);
+}
+
+// 「换一个」：同一次休息内换个内容，不重置任何时钟
+function swapExercise() {
+  const { chooseBreakContent } = require('./reminder-engine');
+  let next = chooseBreakContent(store.getProfile());
+  // 尽量别换出同一个（最多重试 4 次，选项太少时就认了）
+  for (let i = 0; i < 4 && next && currentExercise && next.id === currentExercise.id; i++) {
+    next = chooseBreakContent(store.getProfile());
+  }
+  if (!next) return;
+  currentExercise = next;
+  if (reminderWin) {
+    reminderWin.webContents.send('reminder:show', { label: '换一个试试', reason: 'swap', exercise: next });
+  }
+  // 重新给足自动收起时间
+  if (reminderTimeout) clearTimeout(reminderTimeout);
+  const graceMs = Math.max(90000, (next.durationSec || 60) * 1000 + 45000);
+  reminderTimeout = setTimeout(() => {
+    if (reminderWin) { closeReminder(); setPetState('normal'); }
+  }, graceMs);
+}
+
+// 把连坐时间、下次提醒预估推给桌宠（灵狐随久坐渐变、hover 显示信息）
+function pushVitals() {
+  if (!petWin) return;
+  const now = Date.now();
+  const s = store.getSettings();
+  const sittingMin = Math.max(0, Math.round((now - sittingStartAt) / 60000));
+  const elapsed = now - engine.lastBreakAt;
+  const totalMs = s.breakIntervalMin * 60000;
+  const progress = Math.min(1, elapsed / totalMs); // 0=刚休息过 1=到期
+  const nextInMin = Math.max(0, Math.ceil((totalMs - elapsed) / 60000));
+  petWin.webContents.send('pet:vitals', {
+    sittingMin,
+    progress,
+    nextInMin,
+    pausedUntil: pausedUntil > now ? pausedUntil : 0
+  });
+}
+
+// 暂停提醒（分钟数，或 'today' = 到今晚为止）
+function pauseReminders(kind) {
+  const now = new Date();
+  if (kind === 'today') {
+    const end = new Date(now); end.setHours(23, 59, 0, 0);
+    pausedUntil = end.getTime();
+  } else {
+    pausedUntil = Date.now() + Number(kind || 60) * 60000;
+  }
+  closeReminder();
+  setPetState('normal');
+  refreshTray();
+  pushVitals();
 }
 
 // 轮询主循环
 async function tick() {
   const settings = store.getSettings();
   engine.updateSettings(settings);
-  const s = await detector.sample(settings.codingApps);
+  const s = await detector.sample(settings.codingApps, settings.excludedApps);
 
-  // 用户在动 → 重置久坐计时；若提醒卡还开着且设置了自动收起，则收起
+  // 用户在动 → 重新武装（弹过的提醒等下一次停顿）。
+  // 注意：不因为“你动了鼠标”就关掉提醒卡——否则你伸手去点它的瞬间它就没了。
   if (s.idleSec < 5) {
     engine.noteUserActive();
-    if (reminderWin && settings.autoDismissOnReturn) {
-      closeReminder();
-      setPetState('normal');
-    }
+  }
+  // 离开电脑 5 分钟以上 → 这段连坐算结束了
+  if (s.idleSec >= 300) {
+    sittingStartAt = Date.now();
   }
 
-  // 已经有提醒卡开着就不重复弹
+  pushVitals();
+
+  // 暂停中 / 已有提醒卡开着 → 不弹新的
+  if (Date.now() < pausedUntil) return;
   if (reminderWin) return;
 
   const decision = engine.decide(s);
@@ -196,20 +267,24 @@ async function tick() {
 
 function buildTrayMenu() {
   const stats = store.getStats();
+  const paused = Date.now() < pausedUntil;
+  const pausedLabel = paused
+    ? `已暂停到 ${new Date(pausedUntil).getHours()}:${String(new Date(pausedUntil).getMinutes()).padStart(2, '0')}`
+    : null;
   return Menu.buildFromTemplate([
     { label: `今日完成 ${stats.completedCount} 次 · 连续 ${stats.streak} 天`, enabled: false },
+    ...(pausedLabel ? [{ label: `⏸ ${pausedLabel}`, enabled: false }] : []),
     { type: 'separator' },
     { label: '打开面板 / 设置', click: () => { if (!panelWin) togglePanel(); } },
     { label: '立即来个小动作', click: () => triggerManualExercise() },
-    {
-      label: '暂停 1 小时',
-      click: () => {
-        if (pollTimer) clearInterval(pollTimer);
-        closeReminder();
-        setPetState('normal');
-        setTimeout(startPolling, 60 * 60 * 1000);
-      }
-    },
+    { label: '我喝过水了 💧', click: () => { store.recordWater(); engine.lastWaterAt = Date.now(); pushStats(); refreshTray(); } },
+    { type: 'separator' },
+    ...(paused
+      ? [{ label: '恢复提醒', click: () => { pausedUntil = 0; refreshTray(); pushVitals(); } }]
+      : [
+          { label: '暂停 1 小时', click: () => pauseReminders(60) },
+          { label: '今天不再提醒', click: () => pauseReminders('today') }
+        ]),
     { type: 'separator' },
     {
       label: '开机自启',
@@ -247,18 +322,22 @@ function startPolling() {
 ipcMain.on('reminder:complete', () => {
   store.recordComplete(currentExercise);
   engine.noteBreakTaken(currentExercise);
+  sittingStartAt = Date.now(); // 真的动过了，连坐从头计
   closeReminder();
   setPetState('happy');
   pushStats();
+  pushVitals();
   refreshTray();
   setTimeout(() => setPetState('normal'), 8000);
 });
 
-ipcMain.on('reminder:snooze', (_e, min) => {
+// 「换一个」：这个动作不想做，但愿意做别的
+ipcMain.on('reminder:another', () => swapExercise());
+
+// 「等一下」：不重置 40 分钟到期时钟，只收起卡片；等你下一次停手 30 秒再弹
+ipcMain.on('reminder:wait', () => {
   store.recordSnooze();
-  engine.noteReminderShown(); // 重新计冷却
-  // 临时拉长一次冷却：snooze 分钟后才会再判断
-  engine.lastReminderAt = Date.now() + (min - store.getSettings().reminderCooldownMin) * 60000;
+  engine.noteWait();
   closeReminder();
   setPetState('normal');
 });
@@ -283,13 +362,38 @@ ipcMain.on('pet:toggle-panel', () => togglePanel());
 ipcMain.handle('panel:get', () => ({
   settings: store.getSettings(),
   stats: store.getStats(),
+  week: store.getWeek(),
+  profile: store.getProfile(),
+  paused: Date.now() < pausedUntil,
   autostart: app.getLoginItemSettings().openAtLogin
 }));
+
+// 面板里改「休息时愿意做什么」，即时生效
+ipcMain.handle('panel:save-activities', (_e, activities) => {
+  const clean = Array.isArray(activities)
+    ? activities
+        .filter((a) => a && typeof a.label === 'string' && a.label.trim())
+        .map((a) => ({ label: a.label.trim().slice(0, 16), cat: a.cat || undefined, group: a.group || 'general' }))
+    : [];
+  const profile = store.updateProfile({ activities: clean });
+  engine.setProfile(profile);
+  return profile;
+});
+
+ipcMain.on('panel:drank', () => {
+  store.recordWater();
+  engine.lastWaterAt = Date.now();
+  pushStats();
+  refreshTray();
+});
+
+ipcMain.on('panel:pause', (_e, kind) => pauseReminders(kind));
+ipcMain.on('panel:resume', () => { pausedUntil = 0; refreshTray(); pushVitals(); });
 
 ipcMain.handle('panel:save', (_e, patch) => {
   // 清洗一下数值，避免非法输入
   const clean = {};
-  for (const k of ['aiWaitIdleSec', 'reminderCooldownMin', 'maxSittingMin', 'waterIntervalMin']) {
+  for (const k of ['breakIntervalMin', 'pauseSec', 'waterIntervalMin']) {
     if (patch[k] != null && !Number.isNaN(Number(patch[k]))) clean[k] = Number(patch[k]);
   }
   if (typeof patch.dndStart === 'string') clean.dndStart = patch.dndStart;

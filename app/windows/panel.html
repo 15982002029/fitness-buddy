@@ -10,21 +10,29 @@
     background: linear-gradient(165deg, #ffffff 0%, #f4f6ff 100%);
     border-radius: 18px; box-shadow: 0 14px 46px rgba(40,50,90,.3);
     border: 1px solid rgba(120,130,200,.18);
-    padding: 16px 18px; display: flex; flex-direction: column;
+    padding: 16px 18px 12px; display: flex; flex-direction: column;
   }
   h2 { font-size: 15px; color: #232544; display: flex; align-items: center; gap: 8px; }
   h2 .fox { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; object-position: top; }
   .close { margin-left: auto; cursor: pointer; color: #b3b7d0; font-size: 16px; line-height: 1; }
   .close:hover { color: #6c7cff; }
 
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 12px 0 6px; }
-  .stat { background: #eef0ff; border-radius: 10px; padding: 8px 4px; text-align: center; }
-  .stat .n { font-size: 18px; font-weight: 700; color: #4b54c4; }
-  .stat .l { font-size: 10px; color: #8a8fb5; margin-top: 2px; }
-  .sub { font-size: 11px; color: #9094b8; margin-bottom: 8px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 4px; }
+  .stat { background: #eef0ff; border-radius: 10px; padding: 7px 4px; text-align: center; }
+  .stat .n { font-size: 17px; font-weight: 700; color: #4b54c4; }
+  .stat .l { font-size: 10px; color: #8a8fb5; margin-top: 1px; }
+  .sub { font-size: 11px; color: #9094b8; margin-bottom: 6px; }
+
+  /* 最近 7 天小柱状图 */
+  #week { display: flex; align-items: flex-end; gap: 5px; height: 46px; padding: 0 2px; margin-bottom: 8px; }
+  .wcol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .wbar { width: 100%; background: #dfe3fa; border-radius: 4px 4px 2px 2px; min-height: 3px; transition: height .3s; }
+  .wcol.today .wbar { background: #6c7cff; }
+  .wday { font-size: 9px; color: #a8acc8; }
+  .wcol.today .wday { color: #6c7cff; font-weight: 700; }
 
   .section { flex: 1; overflow-y: auto; padding-right: 2px; }
-  .row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #eef0f7; }
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eef0f7; }
   .row label { font-size: 12.5px; color: #3c3f63; }
   .row .hint { font-size: 10px; color: #a8acc8; display: block; margin-top: 1px; }
   input[type=number] { width: 58px; padding: 4px 6px; border: 1px solid #d7dbf0; border-radius: 7px; font-size: 12px; text-align: right; }
@@ -36,12 +44,30 @@
   .switch input:checked + .slider { background: #6c7cff; }
   .switch input:checked + .slider::before { transform: translateX(16px); }
 
-  .btns { display: flex; gap: 8px; margin-top: 12px; }
+  /* 活动偏好编辑 */
+  .gtitle { font-size: 11.5px; font-weight: 700; color: #6c7cff; margin: 10px 0 5px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip {
+    background: #fff; border: 1px solid #dde1f5; color: #5a5f8c; border-radius: 16px;
+    padding: 5px 11px; font-size: 12px; cursor: pointer; transition: .12s;
+  }
+  .chip.sel { background: #6c7cff; border-color: #6c7cff; color: #fff; }
+  .chip.custom.sel { background: #8a5cf6; border-color: #8a5cf6; }
+  .ci { border: 1px dashed #c7cdf5; background: transparent; border-radius: 16px; padding: 5px 10px; font-size: 12px; font-family: inherit; outline: none; width: 74px; color: #4b54c4; }
+  .ci:focus { border-style: solid; border-color: #6c7cff; width: 110px; }
+  .ci::placeholder { color: #b3b7d0; }
+  .acthint { font-size: 10px; color: #a8acc8; margin-top: 2px; }
+
+  .btns { display: flex; gap: 7px; margin-top: 10px; }
+  .btns.mini button { padding: 8px 0; font-size: 12px; }
   button { flex: 1; border: none; border-radius: 10px; padding: 10px 0; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: transform .1s; }
   button:active { transform: scale(.97); }
   #do { background: #eef0ffe0; color: #5a5f8c; }
   #save { background: #6c7cff; color: #fff; }
-  #saved { font-size: 11px; color: #37b26b; text-align: center; height: 14px; margin-top: 6px; opacity: 0; transition: opacity .2s; }
+  #drank { background: #e3f4ff; color: #2b7bb5; }
+  #pause1h, #pausetoday { background: #fff3e0; color: #b57f2b; }
+  #resume { background: #e6f7ec; color: #2b8a4e; }
+  #saved { font-size: 11px; color: #37b26b; text-align: center; height: 13px; margin-top: 4px; opacity: 0; transition: opacity .2s; }
 </style>
 </head>
 <body>
@@ -59,19 +85,16 @@
       <div class="stat"><div class="n" id="s-streak">0</div><div class="l">连续天</div></div>
     </div>
     <div class="sub" id="s-active">今日活动 0 分钟</div>
+    <div id="week"></div>
 
     <div class="section">
       <div class="row">
-        <label>等 AI 判定<span class="hint">停手多少秒算在等 AI 回复</span></label>
-        <div><input type="number" id="aiWaitIdleSec" min="5" max="300"> 秒</div>
+        <label>提醒间隔<span class="hint">每隔多久到期一次</span></label>
+        <div><input type="number" id="breakIntervalMin" min="5" max="240"> 分</div>
       </div>
       <div class="row">
-        <label>提醒冷却<span class="hint">两次提醒最小间隔</span></label>
-        <div><input type="number" id="reminderCooldownMin" min="1" max="180"> 分</div>
-      </div>
-      <div class="row">
-        <label>久坐兜底<span class="hint">坐多久必提醒一次</span></label>
-        <div><input type="number" id="maxSittingMin" min="10" max="240"> 分</div>
+        <label>停顿判定<span class="hint">停手多少秒才弹 · 编码软件里减半</span></label>
+        <div><input type="number" id="pauseSec" min="5" max="300"> 秒</div>
       </div>
       <div class="row">
         <label>喝水提醒<span class="hint">多久提醒喝一次水</span></label>
@@ -85,8 +108,16 @@
         <label>开机自启</label>
         <div class="switch"><input type="checkbox" id="autostart"><span class="slider"></span></div>
       </div>
+
+      <div id="acts"></div>
+      <div class="acthint">点选/取消 · 虚线框里输入回车可自己加 · 保存设置后生效</div>
     </div>
 
+    <div class="btns mini">
+      <button id="drank">💧 我喝过了</button>
+      <button id="pause1h">⏸ 停 1 小时</button>
+      <button id="pausetoday">今天不扰</button>
+    </div>
     <div class="btns">
       <button id="do">来个小动作</button>
       <button id="save">保存设置</button>
@@ -95,10 +126,69 @@
   </div>
 <script>
   const $ = (id) => document.getElementById(id);
-  const numFields = ['aiWaitIdleSec', 'reminderCooldownMin', 'maxSittingMin', 'waterIntervalMin'];
+  const numFields = ['breakIntervalMin', 'pauseSec', 'waterIntervalMin'];
+
+  // 与 onboarding 一致的大类与预设（改这里记得同步 onboarding.html）
+  const GROUPS = [
+    { id: 'eyecare', title: '🌿 护眼养神', opts: [{ t: '远眺护眼', cat: 'eyes' }, { t: '深呼吸', cat: 'breathing' }] },
+    { id: 'stretch', title: '🧣 舒展筋骨', opts: [{ t: '肩颈舒缓', cat: 'shoulder_neck' }, { t: '腰背舒展', cat: 'back' }, { t: '手腕活动', cat: 'wrist' }] },
+    { id: 'move', title: '🏃 起身活动', opts: [{ t: '起身走动', cat: 'stand' }, { t: '原地踏步', cat: 'legs' }] },
+    { id: 'energy', title: '💧 补充能量', opts: [{ t: '喝水', cat: 'water' }, { t: '接杯茶/咖啡' }] },
+    { id: 'intense', title: '💪 来点强度', opts: [{ t: '跳绳' }, { t: '俯卧撑' }, { t: '深蹲' }] }
+  ];
+  let activities = []; // [{label, cat?, group}]
+
+  function renderActs() {
+    const box = $('acts');
+    const presetLabels = new Set(GROUPS.flatMap((g) => g.opts.map((o) => o.t)));
+    const has = (l) => activities.some((a) => a.label === l);
+    let h = '';
+    GROUPS.forEach((g) => {
+      h += `<div class="gtitle">${g.title}</div><div class="chips">`;
+      g.opts.forEach((o) => {
+        h += `<span class="chip${has(o.t) ? ' sel' : ''}" data-label="${o.t}" data-cat="${o.cat || ''}" data-group="${g.id}">${o.t}</span>`;
+      });
+      activities.filter((a) => a.group === g.id && !presetLabels.has(a.label)).forEach((a) => {
+        h += `<span class="chip custom sel" data-label="${a.label}" data-custom="1">${a.label} ×</span>`;
+      });
+      h += `<input type="text" class="ci" data-group="${g.id}" placeholder="自己加…" maxlength="16" />`;
+      h += `</div>`;
+    });
+    box.innerHTML = h;
+
+    box.querySelectorAll('.chip').forEach((el) => {
+      el.onclick = () => {
+        const label = el.dataset.label;
+        const i = activities.findIndex((a) => a.label === label);
+        if (i >= 0) activities.splice(i, 1);
+        else if (!el.dataset.custom) activities.push({ label, cat: el.dataset.cat || undefined, group: el.dataset.group });
+        renderActs();
+      };
+    });
+    box.querySelectorAll('.ci').forEach((inp) => {
+      inp.onkeydown = (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const v = (inp.value || '').trim();
+        if (v && !activities.some((a) => a.label === v)) activities.push({ label: v, group: inp.dataset.group });
+        renderActs();
+      };
+    });
+  }
+
+  function renderWeek(week) {
+    const el = $('week');
+    const max = Math.max(1, ...week.map((d) => d.completedCount + d.waterCount));
+    el.innerHTML = week.map((d, i) => {
+      const v = d.completedCount + d.waterCount;
+      const hpx = Math.round((v / max) * 34) + 3;
+      return `<div class="wcol${i === 6 ? ' today' : ''}" title="${d.date}：完成${d.completedCount} 喝水${d.waterCount}">
+        <div class="wbar" style="height:${hpx}px"></div><div class="wday">${d.day}</div></div>`;
+    }).join('');
+  }
 
   async function load() {
-    const { settings, stats, autostart } = await window.buddy.getPanelData();
+    const { settings, stats, week, profile, paused, autostart } = await window.buddy.getPanelData();
     $('s-done').textContent = stats.completedCount;
     $('s-skip').textContent = stats.skippedCount;
     $('s-water').textContent = stats.waterCount;
@@ -108,6 +198,14 @@
     $('dndStart').value = settings.dndStart || '';
     $('dndEnd').value = settings.dndEnd || '';
     $('autostart').checked = !!autostart;
+    activities = (profile.activities || []).map((a) => (typeof a === 'string' ? { label: a, cat: a, group: 'general' } : a));
+    renderActs();
+    renderWeek(week || []);
+    if (paused) {
+      $('pause1h').outerHTML = '<button id="resume">▶ 恢复提醒</button>';
+      $('pausetoday').style.display = 'none';
+      $('resume').onclick = () => { window.buddy.resume(); window.buddy.closePanel(); };
+    }
   }
 
   $('save').onclick = async () => {
@@ -116,11 +214,15 @@
     patch.dndStart = $('dndStart').value;
     patch.dndEnd = $('dndEnd').value;
     await window.buddy.saveSettings(patch);
+    await window.buddy.saveActivities(activities);
     await window.buddy.setAutostart($('autostart').checked);
     const s = $('saved'); s.style.opacity = 1; setTimeout(() => (s.style.opacity = 0), 1500);
   };
 
   $('do').onclick = () => window.buddy.doExercise();
+  $('drank').onclick = () => { window.buddy.drank(); const s = $('saved'); s.textContent = '记下了，喝水 +1 💧'; s.style.opacity = 1; setTimeout(() => { s.style.opacity = 0; s.textContent = '已保存 ✓'; }, 1500); load(); };
+  $('pause1h').onclick = () => { window.buddy.pause(60); window.buddy.closePanel(); };
+  $('pausetoday').onclick = () => { window.buddy.pause('today'); window.buddy.closePanel(); };
   $('close').onclick = () => window.buddy.closePanel();
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.buddy.closePanel(); });
 

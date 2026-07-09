@@ -20,13 +20,23 @@
   .skip { margin-left: auto; font-size: 11px; color: #b3b7d0; cursor: pointer; }
   .skip:hover { color: #6c7cff; }
 
-  .body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .body { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow-y: auto; }
+  .body.top { justify-content: flex-start; }
   .fox { width: 120px; margin: 0 auto 8px; display: block; filter: drop-shadow(0 6px 12px rgba(0,0,0,.2)); animation: float 3.5s ease-in-out infinite; }
   @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
   h1 { font-size: 20px; color: #232544; text-align: center; }
   .lead { font-size: 13px; color: #7a7fa6; text-align: center; line-height: 1.7; margin-top: 10px; }
   .q { font-size: 17px; font-weight: 700; color: #232544; margin-bottom: 4px; }
   .qsub { font-size: 12px; color: #9498bc; margin-bottom: 16px; }
+  .gtitle { font-size: 12.5px; font-weight: 700; color: #6c7cff; margin: 14px 0 8px; }
+  .gtitle:first-of-type { margin-top: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; align-items: center; }
+  .chip { background: #f0f2ff; border: 1px solid #c7cdf5; color: #4b54c4; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; }
+  .chip b { color: #a0a4c8; font-weight: 400; margin-left: 2px; }
+  .chip:hover { background: #ffe9ec; border-color: #f0b6c0; color: #c0455e; }
+  .ci { border: 1px dashed #c7cdf5; background: transparent; border-radius: 20px; padding: 6px 12px; font-size: 12.5px; font-family: inherit; outline: none; width: 92px; color: #4b54c4; }
+  .ci:focus { border-style: solid; border-color: #6c7cff; width: 130px; }
+  .ci::placeholder { color: #b3b7d0; }
 
   .opts { display: flex; flex-direction: column; gap: 9px; }
   .opts.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
@@ -69,16 +79,30 @@
   </div>
 
 <script>
-  const answers = { painAreas: [], workStyle: '', frequency: '', intensity: '', duration: '', dndStart: '', dndEnd: '' };
+  const answers = { activities: [], workStyle: '', frequency: '', intensity: '', duration: '', dndStart: '', dndEnd: '' };
 
   const STEPS = [
     { type: 'welcome' },
     {
-      type: 'multi', key: 'painAreas', q: '你哪里最容易累？', sub: '可多选，灵狐会多推这些部位的动作', grid: true,
-      opts: [
-        { v: 'eyes', ico: '👀', t: '眼睛' }, { v: 'neck_shoulder', ico: '🧣', t: '肩颈' },
-        { v: 'wrist', ico: '✋', t: '手腕' }, { v: 'back', ico: '🪑', t: '腰背' },
-        { v: 'legs', ico: '🦵', t: '腿脚' }, { v: 'mental', ico: '🧠', t: '精神疲劳' }
+      type: 'activities', key: 'activities', q: '休息时你愿意做什么？',
+      sub: '下面只是灵感 —— 勾你会做的，每个大类都能自己加',
+      groups: [
+        { id: 'eyecare', title: '🌿 护眼养神', opts: [
+          { t: '远眺护眼', cat: 'eyes', ico: '👀' }, { t: '深呼吸', cat: 'breathing', ico: '🌬' }
+        ] },
+        { id: 'stretch', title: '🧣 舒展筋骨', opts: [
+          { t: '肩颈舒缓', cat: 'shoulder_neck', ico: '🧣' }, { t: '腰背舒展', cat: 'back', ico: '🔄' },
+          { t: '手腕活动', cat: 'wrist', ico: '✋' }
+        ] },
+        { id: 'move', title: '🏃 起身活动', opts: [
+          { t: '起身走动', cat: 'stand', ico: '🧍' }, { t: '原地踏步', cat: 'legs', ico: '🦵' }
+        ] },
+        { id: 'energy', title: '💧 补充能量', opts: [
+          { t: '喝水', cat: 'water', ico: '💧' }, { t: '接杯茶/咖啡', ico: '☕' }
+        ] },
+        { id: 'intense', title: '💪 来点强度', opts: [
+          { t: '跳绳', ico: '🪢' }, { t: '俯卧撑', ico: '💪' }, { t: '深蹲', ico: '🏋' }
+        ] }
       ]
     },
     {
@@ -142,6 +166,7 @@
   function render() {
     const s = STEPS[step];
     renderDots();
+    body.classList.toggle('top', s.type === 'activities'); // 活动题内容多，顶部对齐避免被裁
     backBtn.style.display = step > 0 && s.type !== 'finish' ? 'block' : (step > 0 ? 'block' : 'none');
 
     if (s.type === 'welcome') {
@@ -155,19 +180,77 @@
     }
 
     if (s.type === 'finish') {
-      const areaNames = { eyes: '眼睛', neck_shoulder: '肩颈', wrist: '手腕', back: '腰背', legs: '腿脚', mental: '精神' };
-      const areas = answers.painAreas.map((a) => areaNames[a]).join('、') || '全身';
+      const acts = answers.activities.map((a) => a.label).join('、') || '各种小活动';
       body.innerHTML = `
         <img class="fox" src="../../assets/character/fox.png" />
         <h1>好啦，交给我 ✨</h1>
-        <p class="lead">我会重点照顾你的 <b style="color:#6c7cff">${areas}</b>，<br>用你选的节奏温柔提醒。<br><br>之后想改，点我一下就能进设置。</p>`;
+        <p class="lead">休息时我只会提醒你做：<br><b style="color:#6c7cff">${acts}</b><br>用你选的节奏。<br><br>之后想改，点我一下就能进设置。</p>`;
       nextBtn.textContent = '开始使用';
       nextBtn.disabled = false;
       backBtn.style.display = 'block';
       return;
     }
 
-    // 问题步骤
+    // 活动选择步骤：每个大类 = 启发预设 + 该类自己加
+    if (s.type === 'activities') {
+      const chosen = answers[s.key]; // [{label, cat?, group}]
+      const has = (label) => chosen.some((a) => a.label === label);
+      const presetLabels = new Set(s.groups.flatMap((g) => g.opts.map((o) => o.t)));
+      let gh = `<div class="q">${s.q}</div><div class="qsub">${s.sub}</div>`;
+
+      s.groups.forEach((g) => {
+        gh += `<div class="gtitle">${g.title}</div><div class="opts grid">`;
+        g.opts.forEach((o) => {
+          gh += `<div class="opt${has(o.t) ? ' sel' : ''}" data-label="${o.t}" data-cat="${o.cat || ''}" data-group="${g.id}">
+            <span class="ico">${o.ico}</span><span class="col"><span class="t">${o.t}</span></span>
+            <span class="check">✓</span></div>`;
+        });
+        gh += `</div>`;
+        // 该大类里用户自己加的
+        const mine = chosen.filter((a) => a.group === g.id && !presetLabels.has(a.label));
+        gh += `<div class="chips">`;
+        mine.forEach((a) => { gh += `<span class="chip" data-label="${a.label}">${a.label} <b>×</b></span>`; });
+        gh += `<span class="addmini"><input type="text" class="ci" data-group="${g.id}" placeholder="自己加…" maxlength="16" /></span>`;
+        gh += `</div>`;
+      });
+
+      body.innerHTML = gh;
+      nextBtn.textContent = '下一步';
+
+      // 预设点选
+      body.querySelectorAll('.opt').forEach((el) => {
+        el.onclick = () => {
+          const label = el.dataset.label;
+          const cat = el.dataset.cat || undefined;
+          const group = el.dataset.group;
+          const i = chosen.findIndex((a) => a.label === label);
+          if (i >= 0) chosen.splice(i, 1); else chosen.push({ label, cat, group });
+          render();
+        };
+      });
+      // 每个大类的自定义输入（回车添加，带 group）
+      body.querySelectorAll('.ci').forEach((inp) => {
+        inp.onkeydown = (e) => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          const v = (inp.value || '').trim();
+          const group = inp.dataset.group;
+          if (v && !chosen.some((a) => a.label === v)) chosen.push({ label: v, group });
+          render();
+        };
+      });
+      // 删除自定义
+      body.querySelectorAll('.chip').forEach((el) => {
+        el.onclick = () => {
+          const i = chosen.findIndex((a) => a.label === el.dataset.label);
+          if (i >= 0) { chosen.splice(i, 1); render(); }
+        };
+      });
+      updateNextEnabled();
+      return;
+    }
+
+    // 问题步骤（single / multi）
     const sel = s.type === 'multi' ? answers[s.key] : [answers[s.key]];
     let html = `<div class="q">${s.q}</div><div class="qsub">${s.sub}</div>`;
     html += `<div class="opts${s.grid ? ' grid' : ''}">` + s.opts.map((o) => optionCard(o, sel.includes(o.v))).join('') + `</div>`;
@@ -200,9 +283,8 @@
 
   function updateNextEnabled() {
     const s = STEPS[step];
-    if (s.type === 'multi') nextBtn.disabled = false; // 痛点可不选
-    else if (s.type === 'single') nextBtn.disabled = !answers[s.key];
-    else nextBtn.disabled = false;
+    if (s.type === 'single') nextBtn.disabled = !answers[s.key];
+    else nextBtn.disabled = false; // 多选/分组可不选（默认全部）
   }
 
   nextBtn.onclick = () => {
