@@ -18,7 +18,7 @@ let currentExercise = null; // 当前正在提示的动作
 let reminderTimeout = null; // 提醒卡无人理会时的自动收起计时
 let petState = 'normal'; // normal | tired | happy
 let sittingStartAt = Date.now(); // 本段连坐的开始时间（完成活动或离开电脑后重置）
-let pausedUntil = 0; // 暂停提醒到这个时间点
+let pausedUntil = 0; // 暂停提醒到这个时间点（启动时从 store 恢复，「今天不再提醒」重启仍有效）
 
 const POLL_MS = 5000; // 每 5 秒采样一次
 const isDev = process.argv.includes('--dev');
@@ -176,12 +176,20 @@ function showReminder(decision) {
     exercise: decision.exercise
   });
   engine.noteReminderShown();
-  // 没人理的话，自己静静收起（不算跳过、不算完成）。
-  // 时长要比动作倒计时长：完成按钮要倒计时结束才亮，别在那之前把卡收走。
+  armAutoDismiss(decision.exercise);
+}
+
+// 没人理的话自己静静收起（不算跳过、不算完成，之后隔最小间隔再试）。
+// 时长要比动作倒计时长：完成按钮要倒计时结束才亮，别在那之前把卡收走。
+function armAutoDismiss(exercise) {
   if (reminderTimeout) clearTimeout(reminderTimeout);
-  const graceMs = Math.max(90000, (decision.exercise?.durationSec || 60) * 1000 + 45000);
+  const graceMs = Math.max(90000, (exercise?.durationSec || 60) * 1000 + 45000);
   reminderTimeout = setTimeout(() => {
-    if (reminderWin) { closeReminder(); setPetState('normal'); }
+    if (reminderWin) {
+      engine.noteAutoDismissed();
+      closeReminder();
+      setPetState('normal');
+    }
   }, graceMs);
 }
 
@@ -189,21 +197,18 @@ function showReminder(decision) {
 function swapExercise() {
   const { chooseBreakContent } = require('./reminder-engine');
   let next = chooseBreakContent(store.getProfile());
-  // 尽量别换出同一个（最多重试 4 次，选项太少时就认了）
+  // 尽量别换出同一个（最多重试 4 次）
   for (let i = 0; i < 4 && next && currentExercise && next.id === currentExercise.id; i++) {
     next = chooseBreakContent(store.getProfile());
   }
-  if (!next) return;
+  // 实在换不出别的（比如只选了一个活动）→ 保持原卡不动，
+  // 别重发同一张卡把用户的倒计时和完成按钮重置回起点
+  if (!next || (currentExercise && next.id === currentExercise.id)) return;
   currentExercise = next;
   if (reminderWin) {
     reminderWin.webContents.send('reminder:show', { label: '换一个试试', reason: 'swap', exercise: next });
   }
-  // 重新给足自动收起时间
-  if (reminderTimeout) clearTimeout(reminderTimeout);
-  const graceMs = Math.max(90000, (next.durationSec || 60) * 1000 + 45000);
-  reminderTimeout = setTimeout(() => {
-    if (reminderWin) { closeReminder(); setPetState('normal'); }
-  }, graceMs);
+  armAutoDismiss(next);
 }
 
 // 把连坐时间、下次提醒预估推给桌宠（灵狐随久坐渐变、hover 显示信息）
@@ -224,7 +229,7 @@ function pushVitals() {
   });
 }
 
-// 暂停提醒（分钟数，或 'today' = 到今晚为止）
+// 暂停提醒（分钟数，或 'today' = 到今晚为止）；落盘，重启仍有效
 function pauseReminders(kind) {
   const now = new Date();
   if (kind === 'today') {
@@ -233,34 +238,49 @@ function pauseReminders(kind) {
   } else {
     pausedUntil = Date.now() + Number(kind || 60) * 60000;
   }
+  store.setPausedUntil(pausedUntil);
   closeReminder();
   setPetState('normal');
   refreshTray();
   pushVitals();
 }
 
+function resumeReminders() {
+  pausedUntil = 0;
+  store.setPausedUntil(0);
+  refreshTray();
+  pushVitals();
+}
+
+// 用户自己喝了水（托盘/面板一键记录），统一入口
+function markWaterDrunk() {
+  const stats = store.recordWater();
+  engine.lastWaterAt = Date.now();
+  pushStats();
+  refreshTray();
+  return stats;
+}
+
 // 轮询主循环
 async function tick() {
   const settings = store.getSettings();
   engine.updateSettings(settings);
-  const s = await detector.sample(settings.codingApps, settings.excludedApps);
 
-  // 用户在动 → 重新武装（弹过的提醒等下一次停顿）。
-  // 注意：不因为“你动了鼠标”就关掉提醒卡——否则你伸手去点它的瞬间它就没了。
-  if (s.idleSec < 5) {
-    engine.noteUserActive();
-  }
-  // 离开电脑 5 分钟以上 → 这段连坐算结束了
-  if (s.idleSec >= 300) {
+  // 便宜的信号先测：系统空闲时间免费拿（powerMonitor），不用起子进程
+  const idleSec = detector.getIdleSeconds();
+  if (idleSec < 5) engine.noteUserActive();
+  if (idleSec >= 300) {
+    // 离开电脑 5 分钟以上 = 一次自然休息：连坐结束，40 分钟时钟也重置
     sittingStartAt = Date.now();
+    engine.noteNaturalBreak();
   }
-
   pushVitals();
 
-  // 暂停中 / 已有提醒卡开着 → 不弹新的
+  // 暂停中 / 已有提醒卡开着 → 不可能弹卡，别白起 get-windows 子进程
   if (Date.now() < pausedUntil) return;
   if (reminderWin) return;
 
+  const s = await detector.sample(settings.codingApps, settings.excludedApps);
   const decision = engine.decide(s);
   if (decision) showReminder(decision);
 }
@@ -277,10 +297,10 @@ function buildTrayMenu() {
     { type: 'separator' },
     { label: '打开面板 / 设置', click: () => { if (!panelWin) togglePanel(); } },
     { label: '立即来个小动作', click: () => triggerManualExercise() },
-    { label: '我喝过水了 💧', click: () => { store.recordWater(); engine.lastWaterAt = Date.now(); pushStats(); refreshTray(); } },
+    { label: '我喝过水了 💧', click: () => markWaterDrunk() },
     { type: 'separator' },
     ...(paused
-      ? [{ label: '恢复提醒', click: () => { pausedUntil = 0; refreshTray(); pushVitals(); } }]
+      ? [{ label: '恢复提醒', click: () => resumeReminders() }]
       : [
           { label: '暂停 1 小时', click: () => pauseReminders(60) },
           { label: '今天不再提醒', click: () => pauseReminders('today') }
@@ -380,21 +400,21 @@ ipcMain.handle('panel:save-activities', (_e, activities) => {
   return profile;
 });
 
-ipcMain.on('panel:drank', () => {
-  store.recordWater();
-  engine.lastWaterAt = Date.now();
-  pushStats();
-  refreshTray();
-});
+ipcMain.handle('panel:drank', () => markWaterDrunk());
 
 ipcMain.on('panel:pause', (_e, kind) => pauseReminders(kind));
-ipcMain.on('panel:resume', () => { pausedUntil = 0; refreshTray(); pushVitals(); });
+ipcMain.on('panel:resume', () => resumeReminders());
 
 ipcMain.handle('panel:save', (_e, patch) => {
-  // 清洗一下数值，避免非法输入
+  // 清洗 + 钳制数值。0/负数会让引擎失控（pauseSec=0 → 打字时也弹；间隔 0 → 无限弹卡），
+  // HTML 的 min 属性不约束手输值，必须在这里兜底。
+  const LIMITS = { breakIntervalMin: [5, 240], pauseSec: [5, 300], waterIntervalMin: [10, 360] };
   const clean = {};
-  for (const k of ['breakIntervalMin', 'pauseSec', 'waterIntervalMin']) {
-    if (patch[k] != null && !Number.isNaN(Number(patch[k]))) clean[k] = Number(patch[k]);
+  for (const k of Object.keys(LIMITS)) {
+    const n = Number(patch[k]);
+    if (patch[k] != null && Number.isFinite(n)) {
+      clean[k] = Math.min(LIMITS[k][1], Math.max(LIMITS[k][0], Math.round(n)));
+    }
   }
   if (typeof patch.dndStart === 'string') clean.dndStart = patch.dndStart;
   if (typeof patch.dndEnd === 'string') clean.dndEnd = patch.dndEnd;
@@ -435,6 +455,7 @@ if (!gotLock) {
 } else {
   app.whenReady().then(() => {
     engine = new ReminderEngine(store.getSettings(), store.getProfile());
+    pausedUntil = store.getPausedUntil(); // 「今天不再提醒」重启后仍然生效
     createTray();
     if (store.isOnboarded()) {
       startNormalMode();

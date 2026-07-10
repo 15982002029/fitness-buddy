@@ -55,8 +55,10 @@ function pickFromLibrary(cat, profile) {
 
 // 自定义/无库活动 → 造一个简单的“提示卡”对象（没有步骤，让用户自己做）
 function customCard(label, group, profile) {
-  const dur = Math.min(profile?.preferredMaxDurationSec || 60, 120);
-  return { id: 'custom:' + label, name: label, category: 'custom', group: group || 'general', durationSec: dur === 999 ? 60 : dur, steps: [], caution: '', custom: true };
+  // 「时长都行」(999/未设置) → 默认 60 秒；有明确偏好 → 尊重但封顶 120 秒
+  const pref = profile?.preferredMaxDurationSec;
+  const dur = !pref || pref >= 999 ? 60 : Math.min(pref, 120);
+  return { id: 'custom:' + label, name: label, category: 'custom', group: group || 'general', durationSec: dur, steps: [], caution: '', custom: true };
 }
 
 // 给库动作附上 group（不改原对象，返回浅拷贝）
@@ -106,9 +108,24 @@ class ReminderEngine {
     this.settings = settings;
     this.profile = profile || null;
     const now = Date.now();
-    this.lastBreakAt = now;   // 上次休息到期被重置的时间（完成/跳过时重置）
+    this.lastBreakAt = now;   // 上次休息到期被重置的时间（完成/跳过/自然休息时重置）
     this.lastWaterAt = now;
     this.armed = true;        // 是否允许在下一个停顿弹出
+    this.suppressUntil = 0;   // 任意两张卡之间的最小间隔（防骚扰兜底）
+  }
+
+  // 卡片关闭后的最小再弹间隔（分钟）。无论完成/跳过/等一下/无人理会，
+  // 这段时间内绝不再弹任何卡 —— v0.1.0 冷却兜底的回归，防「反复弹」骚扰。
+  static MIN_GAP_MIN = 10;
+
+  noteCardClosed() {
+    this.suppressUntil = Date.now() + ReminderEngine.MIN_GAP_MIN * 60 * 1000;
+  }
+
+  // 离开电脑 ≥5 分钟 = 一次自然休息（stretchly naturalBreaks 思路）：
+  // 人已经起身过了，回来重新计 40 分钟，别刚回工位就被弹。
+  noteNaturalBreak() {
+    this.lastBreakAt = Date.now();
   }
 
   updateSettings(settings) {
@@ -135,11 +152,19 @@ class ReminderEngine {
     this.lastBreakAt = now;
     this.armed = false;
     if (exercise?.category === 'water') this.lastWaterAt = now;
+    this.noteCardClosed();
   }
 
-  // “等一下”：不重置到期时钟，只是收起武装，等下一次停顿再弹
+  // “等一下”：不重置到期时钟，只是收起武装，等下一次停顿再弹。
+  // 注意：这是用户主动的选择，语义就是「下个停顿再来」，所以不加最小间隔。
   noteWait() {
     this.armed = false;
+  }
+
+  // 卡片无人理会自动收起：用户没做选择 → 别急着再弹，隔最小间隔再试
+  noteAutoDismissed() {
+    this.armed = false;
+    this.noteCardClosed();
   }
 
   // 核心决策。传入一次采样，返回 null（不提醒）或 { reason, exercise }
@@ -150,12 +175,20 @@ class ReminderEngine {
 
     if (inDnd(s)) return null;
 
-    // 场景保护：全屏（看视频/放映/共享屏幕）或会议 App 在前台 → 一律不弹
-    if (sample.isFullscreen || sample.isExcluded) return null;
+    // 任意两张卡之间的最小间隔（完成/跳过/无人理会后 10 分钟内不再弹）
+    if (now < this.suppressUntil) return null;
+
+    // 场景保护：全屏（看视频/放映/共享屏幕）或会议 App 在前台 → 不弹。
+    // 例外：编码工具全屏是正常工作方式（macOS 全屏 Space 写代码很普遍），
+    // 恰恰是「等 AI」的主场景，不能被全屏守卫误杀。
+    if ((sample.isFullscreen && !sample.isCoding) || sample.isExcluded) return null;
 
     // 编码工具里的停顿大概率是在等 AI —— 用一半的判定时间更快抓住这个间隙；
     // 其他场景用完整判定时间，宁慢勿扰。
-    const pauseSec = sample.isCoding ? Math.max(10, Math.round(s.pauseSec / 2)) : s.pauseSec;
+    // Math.min 保证编码里的阈值永远不高于普通场景（用户把 pauseSec 设得很小时也成立）。
+    const pauseSec = sample.isCoding
+      ? Math.min(s.pauseSec, Math.max(10, Math.round(s.pauseSec / 2)))
+      : s.pauseSec;
 
     // 关键前置：必须此刻是“停手 ≥ pauseSec 秒”的自然停顿，且已武装。
     // 这两条保证：敲键盘时不弹、弹过一次要先回去工作才会再弹。

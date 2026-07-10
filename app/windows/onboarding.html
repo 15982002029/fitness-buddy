@@ -80,6 +80,8 @@
 
 <script>
   const answers = { activities: [], workStyle: '', frequency: '', intensity: '', duration: '', dndStart: '', dndEnd: '' };
+  // 用户输入的活动名要转义后才能进 innerHTML/属性，否则引号/尖括号会破坏 DOM（注入）
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   const STEPS = [
     { type: 'welcome' },
@@ -180,7 +182,7 @@
     }
 
     if (s.type === 'finish') {
-      const acts = answers.activities.map((a) => a.label).join('、') || '各种小活动';
+      const acts = answers.activities.map((a) => esc(a.label)).join('、') || '各种小活动';
       body.innerHTML = `
         <img class="fox" src="../../assets/character/fox.png" />
         <h1>好啦，交给我 ✨</h1>
@@ -209,7 +211,7 @@
         // 该大类里用户自己加的
         const mine = chosen.filter((a) => a.group === g.id && !presetLabels.has(a.label));
         gh += `<div class="chips">`;
-        mine.forEach((a) => { gh += `<span class="chip" data-label="${a.label}">${a.label} <b>×</b></span>`; });
+        mine.forEach((a) => { gh += `<span class="chip" data-label="${esc(a.label)}">${esc(a.label)} <b>×</b></span>`; });
         gh += `<span class="addmini"><input type="text" class="ci" data-group="${g.id}" placeholder="自己加…" maxlength="16" /></span>`;
         gh += `</div>`;
       });

@@ -113,11 +113,7 @@
       <div class="acthint">点选/取消 · 虚线框里输入回车可自己加 · 保存设置后生效</div>
     </div>
 
-    <div class="btns mini">
-      <button id="drank">💧 我喝过了</button>
-      <button id="pause1h">⏸ 停 1 小时</button>
-      <button id="pausetoday">今天不扰</button>
-    </div>
+    <div class="btns mini" id="minibtns"></div>
     <div class="btns">
       <button id="do">来个小动作</button>
       <button id="save">保存设置</button>
@@ -127,6 +123,8 @@
 <script>
   const $ = (id) => document.getElementById(id);
   const numFields = ['breakIntervalMin', 'pauseSec', 'waterIntervalMin'];
+  // 用户输入的活动名要转义后才能进 innerHTML/属性，否则引号/尖括号会破坏 DOM（注入）
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   // 与 onboarding 一致的大类与预设（改这里记得同步 onboarding.html）
   const GROUPS = [
@@ -149,7 +147,7 @@
         h += `<span class="chip${has(o.t) ? ' sel' : ''}" data-label="${o.t}" data-cat="${o.cat || ''}" data-group="${g.id}">${o.t}</span>`;
       });
       activities.filter((a) => a.group === g.id && !presetLabels.has(a.label)).forEach((a) => {
-        h += `<span class="chip custom sel" data-label="${a.label}" data-custom="1">${a.label} ×</span>`;
+        h += `<span class="chip custom sel" data-label="${esc(a.label)}" data-custom="1">${esc(a.label)} ×</span>`;
       });
       h += `<input type="text" class="ci" data-group="${g.id}" placeholder="自己加…" maxlength="16" />`;
       h += `</div>`;
@@ -187,6 +185,27 @@
     }).join('');
   }
 
+  // 暂停/记水按钮按状态声明式渲染 —— 每次 load 重建，天然可重入（不会二次 load 崩掉）
+  function renderMiniBtns(paused) {
+    const box = $('minibtns');
+    box.innerHTML = paused
+      ? '<button id="drank">💧 我喝过了</button><button id="resume">▶ 恢复提醒</button>'
+      : '<button id="drank">💧 我喝过了</button><button id="pause1h">⏸ 停 1 小时</button><button id="pausetoday">今天不扰</button>';
+    // 记水：只更新水计数，不整面板重载（重载会吹掉用户未保存的编辑）
+    $('drank').onclick = async () => {
+      const stats = await window.buddy.drank();
+      if (stats) $('s-water').textContent = stats.waterCount;
+      const s = $('saved'); s.textContent = '记下了，喝水 +1 💧'; s.style.opacity = 1;
+      setTimeout(() => { s.style.opacity = 0; s.textContent = '已保存 ✓'; }, 1500);
+    };
+    if (paused) {
+      $('resume').onclick = () => { window.buddy.resume(); window.buddy.closePanel(); };
+    } else {
+      $('pause1h').onclick = () => { window.buddy.pause(60); window.buddy.closePanel(); };
+      $('pausetoday').onclick = () => { window.buddy.pause('today'); window.buddy.closePanel(); };
+    }
+  }
+
   async function load() {
     const { settings, stats, week, profile, paused, autostart } = await window.buddy.getPanelData();
     $('s-done').textContent = stats.completedCount;
@@ -201,11 +220,7 @@
     activities = (profile.activities || []).map((a) => (typeof a === 'string' ? { label: a, cat: a, group: 'general' } : a));
     renderActs();
     renderWeek(week || []);
-    if (paused) {
-      $('pause1h').outerHTML = '<button id="resume">▶ 恢复提醒</button>';
-      $('pausetoday').style.display = 'none';
-      $('resume').onclick = () => { window.buddy.resume(); window.buddy.closePanel(); };
-    }
+    renderMiniBtns(!!paused);
   }
 
   $('save').onclick = async () => {
@@ -220,9 +235,6 @@
   };
 
   $('do').onclick = () => window.buddy.doExercise();
-  $('drank').onclick = () => { window.buddy.drank(); const s = $('saved'); s.textContent = '记下了，喝水 +1 💧'; s.style.opacity = 1; setTimeout(() => { s.style.opacity = 0; s.textContent = '已保存 ✓'; }, 1500); load(); };
-  $('pause1h').onclick = () => { window.buddy.pause(60); window.buddy.closePanel(); };
-  $('pausetoday').onclick = () => { window.buddy.pause('today'); window.buddy.closePanel(); };
   $('close').onclick = () => window.buddy.closePanel();
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.buddy.closePanel(); });
 

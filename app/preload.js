@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld('buddy', {
   saveActivities: (activities) => ipcRenderer.invoke('panel:save-activities', activities),
   setAutostart: (on) => ipcRenderer.invoke('panel:set-autostart', on),
   doExercise: () => ipcRenderer.send('panel:do-exercise'),
-  drank: () => ipcRenderer.send('panel:drank'),
+  drank: () => ipcRenderer.invoke('panel:drank'),
   pause: (kind) => ipcRenderer.send('panel:pause', kind),
   resume: () => ipcRenderer.send('panel:resume'),
   closePanel: () => ipcRenderer.send('panel:close'),

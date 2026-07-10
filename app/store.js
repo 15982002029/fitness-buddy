@@ -45,22 +45,48 @@ function emptyDaily(date) {
   return { date, completedCount: 0, skippedCount: 0, snoozeCount: 0, waterCount: 0, activeBreakSeconds: 0 };
 }
 
+// 旧格式活动偏好（纯 cat 字符串数组，如 ['water','eyes']）→ 新格式 {label, cat, group}。
+// 不迁移的话它们在面板里不渲染任何 chip，变成看不见、删不掉的“幽灵限制”。
+const LEGACY_CAT_MAP = {
+  water: { label: '喝水', cat: 'water', group: 'energy' },
+  eyes: { label: '远眺护眼', cat: 'eyes', group: 'eyecare' },
+  breathing: { label: '深呼吸', cat: 'breathing', group: 'eyecare' },
+  shoulder_neck: { label: '肩颈舒缓', cat: 'shoulder_neck', group: 'stretch' },
+  back: { label: '腰背舒展', cat: 'back', group: 'stretch' },
+  wrist: { label: '手腕活动', cat: 'wrist', group: 'stretch' },
+  stand: { label: '起身走动', cat: 'stand', group: 'move' },
+  legs: { label: '原地踏步', cat: 'legs', group: 'move' }
+};
+
+function migrateActivities(list) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((a) => {
+      if (typeof a === 'string') return LEGACY_CAT_MAP[a] ? { ...LEGACY_CAT_MAP[a] } : { label: a, group: 'general' };
+      return a;
+    })
+    .filter((a) => a && a.label);
+}
+
 let state = load();
 
 function load() {
   try {
     const raw = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+    const profile = { ...DEFAULT_PROFILE, ...(raw.profile || {}) };
+    profile.activities = migrateActivities(profile.activities);
     return {
       settings: { ...DEFAULT_SETTINGS, ...(raw.settings || {}) },
-      profile: { ...DEFAULT_PROFILE, ...(raw.profile || {}) },
+      profile,
       onboarded: !!raw.onboarded,
       daily: raw.daily || emptyDaily(todayStr()),
       history: Array.isArray(raw.history) ? raw.history : [],
       streak: raw.streak || 0,
+      pausedUntil: raw.pausedUntil || 0,
       lastActiveDate: raw.lastActiveDate || null
     };
   } catch {
-    return { settings: { ...DEFAULT_SETTINGS }, profile: { ...DEFAULT_PROFILE }, onboarded: false, daily: emptyDaily(todayStr()), history: [], streak: 0, lastActiveDate: null };
+    return { settings: { ...DEFAULT_SETTINGS }, profile: { ...DEFAULT_PROFILE }, onboarded: false, daily: emptyDaily(todayStr()), history: [], streak: 0, pausedUntil: 0, lastActiveDate: null };
   }
 }
 
@@ -154,6 +180,15 @@ module.exports = {
     state.profile = { ...state.profile, ...patch };
     persist();
     return state.profile;
+  },
+  // 暂停状态落盘：「今天不再提醒」重启后仍然有效
+  getPausedUntil() {
+    return state.pausedUntil || 0;
+  },
+  setPausedUntil(ts) {
+    state.pausedUntil = ts || 0;
+    persist();
+    return state.pausedUntil;
   },
   getStats() {
     rolloverIfNeeded();
