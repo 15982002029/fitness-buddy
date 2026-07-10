@@ -100,7 +100,7 @@ function togglePanel() {
   // 刚因 blur 关闭又立刻收到点击（点灵狐时会先 blur 面板）→ 视为“关闭”，不重开
   if (Date.now() - lastPanelCloseAt < 350) return;
   const w = 340;
-  const h = 620;
+  const h = 680;
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   // 尽量贴着桌宠显示
   let x = width - w - 40;
@@ -261,6 +261,56 @@ function markWaterDrunk() {
   return stats;
 }
 
+// 「我去忙 X」：本地规则分析用户要去干嘛 → 预估时长 / 是否算喝水 / 灵狐回一句。
+// 规则覆盖常见场景即可；以后可换成 AI 分析（接口不变）。
+const AWAY_RULES = [
+  { re: /厕所|洗手间|卫生间|方便|wc/i, min: 5, water: false, reply: '去吧去吧，顺便伸个懒腰 🦊' },
+  { re: /咖啡|茶|接[杯点]?水|倒[杯点]?水|喝[杯点]?水|饮/, min: 3, water: true, reply: '补水好习惯！我帮你记上 💧' },
+  { re: /吃|[早午晚](饭|餐)|夜宵|lunch|dinner/i, min: 45, water: true, reply: '好好吃饭，慢慢嚼 🍚 我看家' },
+  { re: /开会|会议|例会|面试|meeting/i, min: 60, water: false, reply: '开会顺利！结束前我不吵你 🤫' },
+  { re: /散步|走走|遛|出去|下楼|快递|外卖/, min: 15, water: false, reply: '走起！晒晒太阳更好 ☀️' },
+  { re: /午睡|睡|躺|休息/, min: 30, water: false, reply: '好好休息，我守着 🛏️' },
+  { re: /跳绳|运动|健身|锻炼|撸铁|跑步/, min: 20, water: false, reply: '太棒了！这才是真·健身 💪' }
+];
+
+function classifyAway(text) {
+  const t = String(text || '').trim();
+  // 末尾带数字 = 用户自己指定分钟数（如「开会 90」）
+  const numMatch = t.match(/(\d{1,3})\s*(分钟|分|min)?\s*$/);
+  const userMin = numMatch ? Math.min(240, Math.max(1, Number(numMatch[1]))) : null;
+  for (const r of AWAY_RULES) {
+    if (r.re.test(t)) return { minutes: userMin || r.min, water: r.water, reply: r.reply };
+  }
+  return { minutes: userMin || 10, water: false, reply: '去吧，回来我再陪你 🦊' };
+}
+
+// 灵狐说一句话（气泡短暂显示）
+function petSay(text, ms = 6000) {
+  if (petWin) petWin.webContents.send('pet:say', { text, ms });
+}
+
+// 应用「我去忙 X」：现在就算一次休息 + 预估时长内免打扰 + 记录
+function goAway(text) {
+  const plan = classifyAway(text);
+  // 起身本身就是这次休息：重置 40 分钟时钟（喝水类顺带重置水钟）
+  engine.noteBreakTaken(plan.water ? { category: 'water' } : null);
+  if (plan.water) store.recordWater();
+  // 主动起身算一次完成；今日活动时长给个适度的记账（封顶 10 分钟，别虚高）
+  store.recordComplete({ category: 'custom', durationSec: Math.min(plan.minutes, 10) * 60 });
+  // 预估时长内免打扰（复用暂停机制，落盘、到点自动恢复）
+  pausedUntil = Date.now() + plan.minutes * 60000;
+  store.setPausedUntil(pausedUntil);
+  sittingStartAt = Date.now();
+  closeReminder();
+  setPetState('happy');
+  petSay(plan.reply);
+  setTimeout(() => setPetState('normal'), 8000);
+  pushStats();
+  pushVitals();
+  refreshTray();
+  return plan;
+}
+
 // 轮询主循环
 async function tick() {
   const settings = store.getSettings();
@@ -404,6 +454,9 @@ ipcMain.handle('panel:drank', () => markWaterDrunk());
 
 ipcMain.on('panel:pause', (_e, kind) => pauseReminders(kind));
 ipcMain.on('panel:resume', () => resumeReminders());
+
+// 「我去忙 X」：主动告诉灵狐要离开去干嘛，返回分析结果给面板展示
+ipcMain.handle('panel:away', (_e, text) => goAway(text));
 
 ipcMain.handle('panel:save', (_e, patch) => {
   // 清洗 + 钳制数值。0/负数会让引擎失控（pauseSec=0 → 打字时也弹；间隔 0 → 无限弹卡），

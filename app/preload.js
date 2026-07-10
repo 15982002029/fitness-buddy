@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('buddy', {
 
   // 桌宠窗用
   onPetState: (cb) => ipcRenderer.on('pet:state', (_e, data) => cb(data)),
+  onSay: (cb) => ipcRenderer.on('pet:say', (_e, data) => cb(data)),
   onStats: (cb) => ipcRenderer.on('stats:update', (_e, data) => cb(data)),
   onVitals: (cb) => ipcRenderer.on('pet:vitals', (_e, data) => cb(data)),
   requestStats: () => ipcRenderer.send('stats:request'),
@@ -26,6 +27,7 @@ contextBridge.exposeInMainWorld('buddy', {
   drank: () => ipcRenderer.invoke('panel:drank'),
   pause: (kind) => ipcRenderer.send('panel:pause', kind),
   resume: () => ipcRenderer.send('panel:resume'),
+  away: (text) => ipcRenderer.invoke('panel:away', text),
   closePanel: () => ipcRenderer.send('panel:close'),
 
   // 首次问卷引导

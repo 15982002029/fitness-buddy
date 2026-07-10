@@ -31,6 +31,16 @@
   .wday { font-size: 9px; color: #a8acc8; }
   .wcol.today .wday { color: #6c7cff; font-weight: 700; }
 
+  /* 我去忙别的 */
+  #awaybox { background: #f6f2ff; border: 1px solid #e5ddfa; border-radius: 12px; padding: 9px 11px 10px; margin-bottom: 8px; }
+  .awaytitle { font-size: 11.5px; font-weight: 700; color: #7a5cd6; margin-bottom: 7px; }
+  .awaychips { display: flex; gap: 6px; margin-bottom: 7px; flex-wrap: wrap; }
+  .awaychip { background: #fff; border: 1px solid #ddd2f5; color: #6a5aa8; border-radius: 15px; padding: 5px 10px; font-size: 12px; cursor: pointer; transition: .12s; }
+  .awaychip:hover { background: #7a5cd6; border-color: #7a5cd6; color: #fff; }
+  #awayInput { width: 100%; border: 1px dashed #cbbdf0; background: transparent; border-radius: 9px; padding: 7px 10px; font-size: 12px; font-family: inherit; outline: none; color: #4b3f88; }
+  #awayInput:focus { border-style: solid; border-color: #7a5cd6; }
+  #awayInput::placeholder { color: #b3a8d8; }
+
   .section { flex: 1; overflow-y: auto; padding-right: 2px; }
   .row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eef0f7; }
   .row label { font-size: 12.5px; color: #3c3f63; }
@@ -86,6 +96,17 @@
     </div>
     <div class="sub" id="s-active">今日活动 0 分钟</div>
     <div id="week"></div>
+
+    <div id="awaybox">
+      <div class="awaytitle">🚶 我去忙别的（告诉灵狐，这段时间不吵你）</div>
+      <div class="awaychips">
+        <span class="awaychip" data-t="上厕所">🚻 上厕所</span>
+        <span class="awaychip" data-t="吃饭">🍚 吃饭</span>
+        <span class="awaychip" data-t="接杯水">💧 接水</span>
+        <span class="awaychip" data-t="出去走走">🌿 走走</span>
+      </div>
+      <input type="text" id="awayInput" placeholder="或者自己说：开会 90、去跳绳…（回车）" maxlength="24" />
+    </div>
 
     <div class="section">
       <div class="row">
@@ -236,6 +257,20 @@
 
   $('do').onclick = () => window.buddy.doExercise();
   $('close').onclick = () => window.buddy.closePanel();
+
+  // 「我去忙别的」：告诉灵狐去干嘛 → 主进程分析并安排免打扰 → 关面板看灵狐送别
+  async function tellAway(text) {
+    const t = (text || '').trim();
+    if (!t) return;
+    await window.buddy.away(t);
+    window.buddy.closePanel();
+  }
+  document.querySelectorAll('.awaychip').forEach((el) => {
+    el.onclick = () => tellAway(el.dataset.t);
+  });
+  $('awayInput').onkeydown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); tellAway(e.target.value); }
+  };
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.buddy.closePanel(); });
 
   load();

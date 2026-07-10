@@ -49,6 +49,7 @@
     opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   #wrap:hover #bubble { opacity: 1; }
+  #bubble.force { opacity: 1; } /* 灵狐主动说话时强制显示 */
   #info {
     margin-top: 2px; display: flex; flex-direction: column; gap: 2px; align-items: center;
     opacity: 0; transition: opacity .2s;
@@ -110,6 +111,18 @@
 
   window.buddy.onStats((s) => {
     statsEl.textContent = `完成 ${s.completedCount} · 跳过 ${s.skippedCount} · 喝水 ${s.waterCount} · 连续 ${s.streak} 天`;
+  });
+
+  // 灵狐主动说话（如「我去忙 X」的送别语）：气泡强制显示几秒
+  let sayTimer = null;
+  window.buddy.onSay(({ text, ms }) => {
+    bubble.textContent = text;
+    bubble.classList.add('force');
+    if (sayTimer) clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => {
+      bubble.classList.remove('force');
+      bubble.textContent = WORD[curState] || WORD.normal;
+    }, ms || 6000);
   });
 
   const sitline = document.getElementById('sitline');
