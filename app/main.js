@@ -26,17 +26,74 @@ const isDev = process.argv.includes('--dev');
 // macOS 上不在 Dock 显示，纯托盘 + 桌宠
 if (process.platform === 'darwin' && app.dock) app.dock.hide();
 
-function createPetWindow() {
-  const { width } = screen.getPrimaryDisplay().workAreaSize;
+// ---- 桌宠贴边收纳 ----
+let petMini = false;          // 是否处于贴边小图标模式
+let petSide = 'right';        // 贴哪边
+let petSavedBounds = null;    // 贴边前的完整窗口 bounds（用于恢复）
+const MINI_SIZE = 56;         // 小图标窗口尺寸
+const DOCK_TUCK = 16;         // 贴边时嵌进屏幕外的像素（露出大半个头）
+const DOCK_THRESHOLD = 30;    // 拖到距边缘多少像素内算“想贴边”
+
+function petFullSize() {
   const size = store.getSettings().petSize;
-  // 灵狐是竖版 3:4，窗口按竖长比例给，另留出上方气泡 + 下方数据条的空间
-  const winW = size + 40;
-  const winH = Math.round(size * 4 / 3) + 70;
+  return { w: size + 40, h: Math.round(size * 4 / 3) + 70 };
+}
+
+function persistPetWin() {
+  if (!petWin) return;
+  const b = petWin.getBounds();
+  store.updateSettings({ petWin: { x: b.x, y: b.y, mini: petMini, side: petSide } });
+}
+
+function sendPetMode() {
+  if (petWin) petWin.webContents.send('pet:mode', { mini: petMini, side: petSide });
+}
+
+// 贴边：缩成小图标、半嵌进屏幕边缘
+function dockPet(side) {
+  if (!petWin) return;
+  const b = petWin.getBounds();
+  if (!petMini) petSavedBounds = b; // 记住完整尺寸位置，点击恢复用
+  const wa = screen.getDisplayMatching(b).workArea;
+  const y = Math.min(Math.max(b.y + Math.round(b.height / 2) - MINI_SIZE / 2, wa.y), wa.y + wa.height - MINI_SIZE);
+  const x = side === 'left' ? wa.x - DOCK_TUCK : wa.x + wa.width - MINI_SIZE + DOCK_TUCK;
+  petMini = true;
+  petSide = side;
+  petWin.setBounds({ x, y, width: MINI_SIZE, height: MINI_SIZE });
+  sendPetMode();
+  persistPetWin();
+}
+
+// 恢复完整桌宠（以当前小图标为中心展开，越界钳回工作区）
+function undockPet() {
+  if (!petWin || !petMini) return;
+  const b = petWin.getBounds();
+  const wa = screen.getDisplayMatching(b).workArea;
+  const { w, h } = petFullSize();
+  const x = Math.min(Math.max(b.x + b.width / 2 - w / 2, wa.x + 4), wa.x + wa.width - w - 4);
+  const y = Math.min(Math.max(b.y + b.height / 2 - h / 2, wa.y + 4), wa.y + wa.height - h - 4);
+  petMini = false;
+  petWin.setBounds({ x: Math.round(x), y: Math.round(y), width: w, height: h });
+  petSavedBounds = null;
+  sendPetMode();
+  persistPetWin();
+}
+
+function createPetWindow() {
+  const { w: winW, h: winH } = petFullSize();
+  const wa = screen.getPrimaryDisplay().workArea;
+  // 位置记忆：优先用上次保存的
+  const saved = store.getSettings().petWin;
+  let x = wa.x + wa.width - winW - 40;
+  let y = wa.y + 100;
+  if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
+    x = saved.x; y = saved.y;
+  }
   petWin = new BrowserWindow({
     width: winW,
     height: winH,
-    x: width - winW - 40,
-    y: 100,
+    x: Math.round(x),
+    y: Math.round(y),
     frame: false,
     transparent: true,
     resizable: false,
@@ -48,6 +105,10 @@ function createPetWindow() {
   petWin.setAlwaysOnTop(true, 'screen-saver');
   petWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   petWin.loadFile(path.join(__dirname, 'windows', 'pet.html'));
+  petWin.webContents.once('did-finish-load', () => {
+    // 上次退出时是贴边状态 → 直接恢复贴边
+    if (saved?.mini) dockPet(saved.side || 'right');
+  });
   petWin.on('closed', () => { petWin = null; });
 }
 
@@ -350,6 +411,14 @@ function buildTrayMenu() {
     { label: '打开面板 / 设置', click: () => { if (!panelWin) togglePanel(); } },
     { label: '立即来个小动作', click: () => triggerManualExercise() },
     { label: '我喝过水了 💧', click: () => markWaterDrunk() },
+    {
+      label: petWin && petWin.isVisible() ? '隐藏桌宠' : '显示桌宠',
+      click: () => {
+        if (!petWin) { createPetWindow(); refreshTray(); return; }
+        petWin.isVisible() ? petWin.hide() : petWin.show();
+        refreshTray();
+      }
+    },
     { type: 'separator' },
     ...(paused
       ? [{ label: '恢复提醒', click: () => resumeReminders() }]
@@ -440,6 +509,21 @@ ipcMain.on('pet:move', (_e, { x, y }) => {
   if (petWin) petWin.setPosition(Math.round(x), Math.round(y));
 });
 ipcMain.on('pet:toggle-panel', () => togglePanel());
+
+// 拖拽结束：靠近左右边缘 → 贴边收纳；贴边状态拖离边缘 → 恢复；其余只记住位置
+ipcMain.on('pet:drag-end', () => {
+  if (!petWin) return;
+  const b = petWin.getBounds();
+  const wa = screen.getDisplayMatching(b).workArea;
+  const nearLeft = b.x <= wa.x + DOCK_THRESHOLD;
+  const nearRight = b.x + b.width >= wa.x + wa.width - DOCK_THRESHOLD;
+  if (!petMini && nearLeft) dockPet('left');
+  else if (!petMini && nearRight) dockPet('right');
+  else if (petMini && !nearLeft && !nearRight) undockPet();
+  else persistPetWin();
+});
+
+ipcMain.on('pet:restore', () => undockPet());
 
 // ---- 面板 ----
 ipcMain.handle('panel:get', () => ({

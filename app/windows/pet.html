@@ -50,6 +50,19 @@
   }
   #wrap:hover #bubble { opacity: 1; }
   #bubble.force { opacity: 1; } /* 灵狐主动说话时强制显示 */
+
+  /* 贴边小图标模式：只剩一个圆形狐狸头，微透明、不打扰 */
+  body.mini #bubble, body.mini #info, body.mini #emote { display: none; }
+  body.mini #wrap { justify-content: center; align-items: center; }
+  body.mini #petBox { flex: none; }
+  body.mini #pet {
+    width: 46px; height: 46px; border-radius: 50%;
+    object-fit: cover; object-position: 50% 8%; /* 露头部 */
+    animation: none !important; opacity: .72;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,.3)) !important;
+    transition: opacity .2s;
+  }
+  body.mini #pet:hover, body.mini #wrap:hover #pet { opacity: 1; }
   #info {
     margin-top: 2px; display: flex; flex-direction: column; gap: 2px; align-items: center;
     opacity: 0; transition: opacity .2s;
@@ -154,8 +167,20 @@
     if (Math.abs(e.screenX - sx) > 3 || Math.abs(e.screenY - sy) > 3) moved = true;
     if (moved) window.buddy.moveWindow(e.screenX - offX, e.screenY - offY);
   });
+  // 贴边小图标模式：主进程广播模式切换，点击语义随之变化
+  let isMini = false;
+  window.buddy.onMode(({ mini }) => {
+    isMini = mini;
+    document.body.classList.toggle('mini', mini);
+  });
+
   wrap.addEventListener('pointerup', (e) => {
-    if (down && !moved) window.buddy.togglePanel(); // 没拖动 = 点击 → 开面板
+    if (down && !moved) {
+      // 没拖动 = 点击：小图标模式先恢复完整桌宠，正常模式开面板
+      if (isMini) window.buddy.restorePet();
+      else window.buddy.togglePanel();
+    }
+    if (down && moved) window.buddy.dragEnd(); // 拖完让主进程判断要不要贴边/离边
     down = false;
     try { wrap.releasePointerCapture(e.pointerId); } catch {}
   });

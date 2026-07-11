@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld('buddy', {
   onVitals: (cb) => ipcRenderer.on('pet:vitals', (_e, data) => cb(data)),
   requestStats: () => ipcRenderer.send('stats:request'),
   moveWindow: (x, y) => ipcRenderer.send('pet:move', { x, y }), // 手动拖拽
+  dragEnd: () => ipcRenderer.send('pet:drag-end'),              // 拖拽结束（判断是否贴边）
+  restorePet: () => ipcRenderer.send('pet:restore'),            // 贴边小图标点击恢复
+  onMode: (cb) => ipcRenderer.on('pet:mode', (_e, data) => cb(data)), // mini/正常模式切换
   togglePanel: () => ipcRenderer.send('pet:toggle-panel'),      // 点击打开面板
 
   // 面板窗用（请求/应答式）

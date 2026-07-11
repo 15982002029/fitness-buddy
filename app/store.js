@@ -23,7 +23,9 @@ const DEFAULT_SETTINGS = {
   ],
   // 这些 App 在前台时不弹提醒（开会场景）；全屏时也一律不弹
   excludedApps: ['zoom', 'tencentmeeting', '腾讯会议', 'webex', '会议'],
-  petSize: 110
+  petSize: 110,
+  // 桌宠窗口记忆：{x, y, mini, side}；null = 用默认位置
+  petWin: null
 };
 
 // 用户画像（由首次 onboarding 问卷生成，影响动作推荐与触发策略）
