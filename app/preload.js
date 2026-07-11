@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('buddy', {
   wait: () => ipcRenderer.send('reminder:wait'),
   skip: () => ipcRenderer.send('reminder:skip'),
   another: () => ipcRenderer.send('reminder:another'),
+  drankAlready: () => ipcRenderer.send('reminder:drank-already'),
 
   // 桌宠窗用
   onPetState: (cb) => ipcRenderer.on('pet:state', (_e, data) => cb(data)),

@@ -116,7 +116,9 @@ function togglePanel() {
     alwaysOnTop: true, hasShadow: true,
     webPreferences: { preload: path.join(__dirname, 'preload.js') }
   });
-  panelWin.setAlwaysOnTop(true, 'screen-saver');
+  // 面板里要打字：层级用 floating（够置顶），别用 screen-saver——
+  // 那会压在输入法候选词窗上面，用户看不见拼音
+  panelWin.setAlwaysOnTop(true, 'floating');
   panelWin.loadFile(path.join(__dirname, 'windows', 'panel.html'));
   panelWin.on('blur', () => closePanel()); // 点别处自动收起
   panelWin.on('closed', () => { panelWin = null; });
@@ -403,6 +405,17 @@ ipcMain.on('reminder:complete', () => {
 
 // 「换一个」：这个动作不想做，但愿意做别的
 ipcMain.on('reminder:another', () => swapExercise());
+
+// 喝水卡上的「刚喝过了」：用户其实已经喝过、只是没告诉灵狐——
+// 记水 + 重置水钟，不算跳过也不算这次完成，收起卡片等下个停顿
+ipcMain.on('reminder:drank-already', () => {
+  markWaterDrunk();
+  engine.noteWait();
+  closeReminder();
+  setPetState('happy');
+  petSay('好嘞，记上了 💧 早说嘛~');
+  setTimeout(() => setPetState('normal'), 5000);
+});
 
 // 「等一下」：不重置 40 分钟到期时钟，只收起卡片；等你下一次停手 30 秒再弹
 ipcMain.on('reminder:wait', () => {

@@ -76,10 +76,17 @@
 <script>
   let countdown = null;
 
+  let isWaterCard = false;
+
   window.buddy.onReminder(({ label, exercise }) => {
     document.getElementById('labelText').textContent = label || '该活动一下啦';
     document.getElementById('name').textContent = exercise.name;
     document.getElementById('duration').textContent = `约 ${exercise.durationSec} 秒`;
+
+    // 喝水卡：「换一个」没意义（水类只有一张卡），换成「刚喝过了」——
+    // 用户可能早就喝过、只是没告诉灵狐，给个诚实的出口
+    isWaterCard = exercise.category === 'water';
+    document.getElementById('another').textContent = isWaterCard ? '刚喝过了 💧' : '换一个';
 
     // 按大类显示灵狐动画；没有对应动画素材时自动回落到静止灵狐
     const fox = document.getElementById('fox');
@@ -136,7 +143,10 @@
   });
 
   document.getElementById('done').onclick = () => window.buddy.complete();
-  document.getElementById('another').onclick = () => window.buddy.another();
+  document.getElementById('another').onclick = () => {
+    if (isWaterCard) window.buddy.drankAlready();
+    else window.buddy.another();
+  };
   document.getElementById('wait').onclick = () => window.buddy.wait();
   document.getElementById('skip').onclick = () => window.buddy.skip();
 </script>
