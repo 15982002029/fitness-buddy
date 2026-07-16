@@ -21,6 +21,20 @@
 - 修改后运行与风险相称的验证。
 - 不提交密钥、令牌或未经脱敏的 transcript。
 
+## 自动闭环（lifecycle hooks，v0.2）
+
+本仓库 `.claude/settings.json` 配置了两个项目级 hooks（脚本在 `.claude/hooks/`，均为只读检查，不写文件、不推送、不上传对话内容）：
+
+- **SessionStart**：自动把 HANDOFF 状态、STATUS 摘要和最近一条 WORKLOG 注入上下文——无需手动"先读取状态文件"。
+- **Stop**：存在 ACTIVE handoff 且本轮有实际文件改动但 `.personal-os/` 未回写时，拦截一次并提醒完成回写（STATUS/WORKLOG/HANDOFF）；纯问答轮、已回写、或第二次停止不拦。
+
+hooks 修改后需重启会话或运行 `/hooks` 重载才生效。
+
+## 推送纪律
+
+- `.personal-os/`、文档与协议类改动：完成回写后可直接提交推送。
+- **应用代码（app/、data/ 等）：推送前需西西确认**；hooks 永远不会自动推送任何内容。
+
 ## 完成前必须回写
 
 - 更新 `.personal-os/STATUS.md`：实际状态、证据、阻塞和最近验证节点。

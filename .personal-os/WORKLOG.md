@@ -4,6 +4,34 @@
 
 ---
 
+## 2026-07-16 Personal OS v0.2 自动闭环 hooks（已完成）
+
+- 工具：Claude Code（Fable 5）
+- 会话 ID：ff1d4702-c2c3-4eaf-901f-17542e8110da
+- 任务来源：西西直接指令（非 handoff；当时无 ACTIVE handoff）
+- 实际完成：
+  - 新增 `.claude/hooks/personal-os-session-start.sh`：SessionStart 时注入 HANDOFF 状态 + STATUS 摘要 + 最近 WORKLOG；ACTIVE 时注入 handoff 全文。
+  - 新增 `.claude/hooks/personal-os-stop.sh`：仅在「ACTIVE handoff + 有实际改动 + .personal-os 未回写」时拦截一次提醒回写；stop_hook_active 防死循环；纯问答/已回写/DONE 状态放行。
+  - 新增 `.claude/settings.json`（全新文件，项目此前无任何 hooks 配置，未覆盖任何已有配置；用户级 ~/.claude 未触碰）。
+  - `.gitignore`：`.claude/` → `.claude/*` + 放行 settings.json 与 hooks/（launch.json、settings.local.json 继续忽略）。
+  - CLAUDE.md：新增「自动闭环」与「推送纪律」章节（应用代码推送需西西确认；hooks 永不推送）。
+- 验证证据（7 项真实测试全过）：
+  1. SessionStart @真仓库（DONE 态）→ 输出状态摘要，退出码 0
+  2. Stop @真仓库（DONE + 干净树）→ 静默放行
+  3. Stop @临时克隆（IN_PROGRESS + app 改动 + 未回写）→ 正确输出 decision:block
+  4. stop_hook_active:true → 放行（防死循环）
+  5. .personal-os 同时被改 → 放行
+  6. SessionStart @ACTIVE 态 → 注入 handoff 全文
+  7. 拦截输出经 jq 校验为合法 JSON；settings.json 结构经 jq -e 校验
+- 决策与偏离：无 ACTIVE handoff 可置 DONE（当前已是 DONE）——该要求由 Stop hook 对未来 handoff 生效。
+- 阻塞与风险/已知限制：
+  - hooks 对本次会话不生效（settings 监视器不监视会话启动时不存在的配置文件），下次会话或 /hooks 重载后生效——SessionStart 的端到端表现待下次会话确认。
+  - Stop 检查基于「未提交改动」启发式：若一轮内把改动连同缺失的回写一起提交掉（树已干净），hook 不会拦。
+  - 脚本静态提醒文本不含对话内容；hooks 无网络调用、无推送能力。
+- 推荐下一步（非授权）：下次会话开始时观察 SessionStart 注入是否出现，作为闭环最终确认。
+
+---
+
 ## 2026-07-16 文档状态同步（已完成）
 
 - 工具：Claude Code（Fable 5）

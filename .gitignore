@@ -11,7 +11,10 @@ fitness-buddy.json
 .DS_Store
 .vscode/
 .idea/
-.claude/
+# .claude 默认忽略，但 Personal OS 的 hooks 与项目级 settings 要进仓库
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 
 # 临时
 /tmp/

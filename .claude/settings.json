@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/personal-os-session-start.sh",
+            "timeout": 10,
+            "statusMessage": "Personal OS：恢复项目状态…"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/personal-os-stop.sh",
+            "timeout": 10,
+            "statusMessage": "Personal OS：回写检查…"
+          }
+        ]
+      }
+    ]
+  }
+}
