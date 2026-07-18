@@ -4,6 +4,30 @@
 
 ---
 
+## 2026-07-19 Git-Fit 只读竞品审查（已完成）
+
+- 工具：Claude Code（Opus 4.8）
+- 会话 ID：9a861863-34cf-4672-a52c-8521e9c27830
+- 任务来源：HANDOFF.md（状态 READY，创建于 2026-07-18，西西在 ChatGPT 中明确授权）
+- 实际完成：
+  - 新增 `research/git-fit-competitive-review.md`，含 HANDOFF 要求的全部 11 个章节，逐条回答 7 个必须问题。
+  - 回写 STATUS.md（新增「竞品位置」章节、扩充最大未知、记录前置最小实验待西西决定）、WORKLOG.md、HANDOFF.md → DONE。
+- 验证证据：
+  1. 执行前 `git status` 干净、无 stash，无未提交改动需保护；`git pull --ff-only origin main` 快进 c3638b3→2da2f38（仅 HANDOFF.md 变更）。
+  2. 一手来源实际访问并取证（2026-07-19）：GitHub 仓库页、README raw、Releases 页、REST API `/repos`（stars 39 / forks 1 / watchers 1 / license null / pushed_at 2026-01-23 / created_at 2026-01-19）、REST API `/issues`（4 条，含 open #1 #4）。
+  3. 本方事实经代码核验：`app/activity-detector.js:56` 显式 `accessibilityPermission:false, screenRecordingPermission:false`；`:28` 用 `powerMonitor.getSystemIdleTime()`；`package.json` 版本 0.1.2；`data/office-micro-exercises.seed.json` 实测 23 条。
+  4. 报告内所有 README/代码引用行号与被引用文件路径逐条复核存在且内容相符。
+  5. 最终 diff 经检查，改动仅限 HANDOFF 允许的 4 个文件；`app/`、`data/`、`assets/`、`package.json`、`docs/04-validation-plan.md` 均未改动。
+- 安全约束遵守：未安装、未运行、未下载 Git-Fit 任何二进制；未授予辅助功能/录屏/自动化权限；未登录外部站点、未发帖、未联系作者或用户；未复制竞品代码、动作库、文案或视觉资产。
+- 决策与偏离：
+  - **偏离（来源不可达）**：HANDOFF 列为已知来源的官网 `https://www.git-fit.app/` 与 `https://git-fit.app/` 在本执行环境均返回 DNS NXDOMAIN（解析器 198.18.0.1，沙箱内部 DNS）。**未据此推断官网下线或产品停运**——沙箱 DNS 限制与域名真实失效在本环境无法区分。所有源自官网的条目（Cursor/Claude/Copilot 检测表述、12,847 developers、Homebrew）在报告中降级标注为「西西 2026-07-18 人工观察，本次未独立复核」。
+  - **来源冲突（保留未消解）**：仓库 HTML 抓取显示存在仓库描述文案，但 REST API 返回 `description: null` 且 `homepage: null`；以 API 为权威并在报告第 2 节保留冲突。
+  - 报告未将 fitness-buddy 写为主线，也未因竞品存在宣布项目失败；建议部分明确标注推翻条件。
+- 阻塞与风险：无阻塞。风险提示：因官网不可达，Git-Fit 侧证据偏向 GitHub 一侧，可能低估其产品完成度与市场表现，报告第 9 节已声明该方法局限。
+- 推荐下一步（非授权，仅记录）：由西西决定是否执行报告第 10 节的 5 分钟安装与首次印象测试（3 人，无需开发）；在此之前维持功能冻结，且不修改 docs/04-validation-plan.md 的指标与判断标准。
+
+---
+
 ## 2026-07-16 Personal OS v0.2 自动闭环 hooks（已完成）
 
 - 工具：Claude Code（Fable 5）
