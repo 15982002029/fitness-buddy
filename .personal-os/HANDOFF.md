@@ -1,67 +1,132 @@
 # 当前执行交接
 
-状态：DONE
-创建时间：2026-07-16（UTC+8）
-完成时间：2026-07-16（UTC+8）
-来源：ChatGPT Personal OS
+状态：READY
+创建时间：2026-07-18（UTC+8）
+来源：西西在 ChatGPT 中明确授权“创建 Git-Fit 对比任务”
 执行端：Claude Code
-任务类型：系统闭环验证，不代表项目主线确认
-
-## 执行结果（Claude Code 回写）
-
-- README.md「当前状态」重写：删除「想法立项 / MVP 规划中」，改为 v0.1.2 实际状态，按 已实现 / 本人自用中 / 待外部验证 三层诚实区分。
-- NOW.md 重写：从原型开发任务更新为验证阶段；已完成项单独列出不再作为下一步；「暂不做」与「第一版成功标准」按约束原样保留；明确主线未确认。
-- 未修改任何产品代码或验证标准；未声称外部验证已完成。
-- STATUS.md 与 WORKLOG.md 已回写。验证证据见 WORKLOG 与提交 diff。
+任务类型：只读竞品审查与验证准备，不代表项目主线确认
 
 ## 任务
 
-更新 fitness-buddy 中已经落后于实际代码的状态文档，让仓库文档准确反映当前 v0.1.2；同时完成 Personal OS 第一次“ChatGPT 交接 → CC/Codex 回写”测试。
+对 Git-Fit 与 fitness-buddy 做一次基于公开一手证据的竞品审查，判断两者的真实重叠、可验证差异和下一步最小验证实验。
+
+最终新增：
+
+`research/git-fit-competitive-review.md`
+
+并按 Personal OS 协议回写 HANDOFF、STATUS 与 WORKLOG，提交并 push 到 GitHub。
 
 ## 为什么现在做
 
-代码已经明显超过 README 与 NOW.md 描述，但中央系统此前只能看到过期状态。用一个低风险、真实且可验证的文档任务测试执行闭环，比继续写抽象规则更有效。
+fitness-buddy 已可由西西本人使用，但尚未开始外部用户验证，且西西当前没有符合条件的熟人测试候选者。
+
+2026-07-18 发现 Git-Fit 与 fitness-buddy 高度相似：两者都面向 AI coding / 长时间电脑工作的 macOS 用户，都试图把 AI 等待间隙转化为短时活动。公开招募前必须先判断 fitness-buddy 是否存在用户真正关心的差异，避免在差异不清楚时继续开发或传播。
+
+## 已知一手来源
+
+- Git-Fit 官网：https://www.git-fit.app/
+- Git-Fit GitHub：https://github.com/rebelchris/git-fit
+- Git-Fit Releases：https://github.com/rebelchris/git-fit/releases
+- fitness-buddy README：本仓库 README.md
+- fitness-buddy 当前任务：本仓库 NOW.md
+- fitness-buddy 验证计划：本仓库 docs/04-validation-plan.md
+- fitness-buddy 实现：本仓库 app/、data/、package.json
 
 ## 已确认事实
 
-- package.json 版本为 0.1.2。
-- Electron 桌面应用可构建 macOS Apple Silicon 的 DMG/zip。
-- 灵狐桌宠、提醒引擎、23 个办公室微运动、问卷、统计和设置已实现。
-- 已根据本人使用反馈重做触发模型并完成多轮体验修正。
-- 最近一次提交为 2026-07-11。
-- 原定验证计划是本人和 3–5 名长时间电脑工作者连续使用 3 天。
-- 尚无证据证明外部验证已经完成。
+### fitness-buddy
 
-## 未决问题
+- Electron v0.1.2，Apple Silicon DMG/zip。
+- 灵狐桌宠常驻、拖动、贴边收纳。
+- “提醒到期 + 自然停顿”触发；用户打字时提醒收起。
+- 零系统权限。
+- 23 个办公室微运动。
+- 首次问卷、设置、今日数据和 7 天统计。
+- 本人可用，外部 3–5 人 × 3 天验证尚未开始。
 
-- fitness-buddy 是否成为当前主线，西西尚未确认。
-- 是否值得传播、商业化或继续开发，必须由真实用户验证决定。
+### Git-Fit
 
-## 约束
+- macOS 菜单栏应用。
+- 公开定位是检测 AI coding 等待并触发 20–60 秒微运动。
+- 官网写明检测 Cursor、Claude、Copilot 等。
+- v1.3.0 Release 说明使用进程 / CPU 活动减少空闲进程误触发。
+- 支持 Homebrew 与 DMG。
+- 安装说明要求辅助功能权限。
+- 2026-07-18 公开 GitHub 页面显示 4 个 Releases、约 39 stars、1 fork。
+- 官网写有“12,847 developers”，但该数字未经独立验证，只能标为产品方主张。
 
-- 不增加或修改产品功能。
-- 不改变现有验证标准。
-- 不声称已经完成多人验证。
-- 不把项目自动写成已确认主线。
-- 不修改与文档状态同步无关的文件。
-- 保护用户已有未提交改动。
+## 必须回答的问题
 
-## 工作范围
+1. Git-Fit 是否是 fitness-buddy 的直接替代品？重叠到什么程度？
+2. 两者在触发逻辑、权限、隐私、交互形态、动作内容、统计、安装分发和目标用户上的事实差异是什么？
+3. 哪些差异可能对用户有意义，哪些只是开发者自我感觉或尚无证据的功能差异？
+4. fitness-buddy 的灵狐桌宠、零权限、自然停顿与打字即收起，分别需要怎样验证？
+5. Git-Fit 的活跃度、发布节奏、仓库可见性、安装摩擦和公开市场证据分别是什么？
+6. 在不继续开发的前提下，下一项最小验证实验是什么？
+7. 基于现有证据，给出“继续差异化验证 / 调整定位 / 暂停”的建议，但不得自动改变项目主线。
 
-允许修改：
+## 研究规范
 
-- README.md 中的“当前状态”等明显过期描述。
-- NOW.md，使其从原型开发任务更新为当前验证阶段。
-- `.personal-os/HANDOFF.md`
-- `.personal-os/STATUS.md`
-- `.personal-os/WORKLOG.md`
+- 优先使用官网、GitHub 仓库、Release、README、代码和官方文档等一手来源。
+- 每项关键结论附 URL、访问日期和证据位置。
+- 明确区分：
+  - 可核验事实；
+  - 产品方自述或营销主张；
+  - 基于证据的推断；
+  - 当前未知。
+- 如果来源冲突，保留冲突并说明。
+- 不使用搜索摘要替代正文证据。
+- 不把 stars、官网数字或宣传文案直接等同于真实用户量、留存或收入。
+- 不复制 Git-Fit 的代码、动作库、文案或视觉资产。
+
+## 安全与执行约束
+
+- 不安装或运行 Git-Fit。
+- 不下载其 DMG 或其他二进制。
+- 不授予辅助功能、录屏、自动化或其他系统权限。
+- 不登录外部网站，不发布帖子，不联系作者或用户。
+- 不修改 fitness-buddy 的 app/、data/、assets/、package.json 或任何产品代码。
+- 不新增功能，不修复顺手发现的问题。
+- 不改变 docs/04-validation-plan.md 的验证标准。
+- 不把 fitness-buddy 自动写成主线，也不因为竞品存在自动宣布项目失败。
+- 保护西西已有未提交改动。
+- 遇到无法从公开一手来源确认的事项，标为未知，不猜测。
+
+## 报告结构
+
+`research/git-fit-competitive-review.md` 至少包含：
+
+1. 结论摘要。
+2. 来源与证据范围。
+3. 产品定位与目标用户对照。
+4. 触发机制与技术实现对照。
+5. 权限、隐私和安全对照。
+6. 安装、分发、活跃度与市场证据。
+7. 功能与体验对照表。
+8. fitness-buddy 可能差异及其证据强度。
+9. 最大未知与风险。
+10. 下一项最小验证实验。
+11. 建议：继续差异化验证 / 调整定位 / 暂停，并说明推翻该建议需要什么新证据。
+
+## 允许修改
+
+- 新增 `research/git-fit-competitive-review.md`
+- 更新 `.personal-os/HANDOFF.md`
+- 更新 `.personal-os/STATUS.md`
+- 追加 `.personal-os/WORKLOG.md`
+
+不允许修改其他文件。
 
 ## 验收标准
 
-- README 不再将项目描述为“MVP 规划中”。
-- NOW.md 不再把已完成功能列为下一步。
-- 文档明确区分：已实现、本人自用、待外部验证。
-- 不出现未经证实的用户、留存或收入结论。
+- 报告完整回答 7 个必须问题。
+- 每项关键事实有一手来源和访问日期。
+- 明确区分事实、产品方主张、推断和未知。
+- 对 Git-Fit 与 fitness-buddy 都不夸大、不贬低。
+- 没有安装、运行或下载竞品二进制。
+- 没有修改应用代码或产品验证标准。
+- 提供一个无需继续开发即可执行的最小验证实验。
 - STATUS 与 WORKLOG 完成回写。
-- HANDOFF 状态变为 DONE；若遇到阻塞则变为 BLOCKED 并说明原因。
-- 执行端给出 diff 或文件核对证据。文档任务无需运行应用测试，但必须说明。
+- HANDOFF 完成后变为 DONE；阻塞则变为 BLOCKED 并写明原因。
+- 文档任务无需运行 fitness-buddy 应用测试，但必须检查最终 diff、允许文件范围和链接完整性。
+- 将文档与 Personal OS 回写提交并 push，最终回复提供 commit SHA、修改文件、验证证据、偏离和仍存在的未知。
